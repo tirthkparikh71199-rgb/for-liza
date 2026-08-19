@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#ff4d8d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>For Fats ❤️</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❤️</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+</head>
+<body>
+  <div class="bg-blobs"><span></span><span></span><span></span></div>
+  <div class="hero-hearts" id="heroHearts"></div>
+
+  <nav>
+    <span class="brand script-font">Fats ❤️ Tirth</span>
+    <div class="nav-links">
+      <a href="#letter">💌 Letter</a>
+      <a href="#mood">😊 Mood</a>
+      <a href="#photos">📸 Photos</a>
+      <a href="#notes">❤️ Notes</a>
+      <a href="#travel">✈️ Travel</a>
+      <a href="#bot">💕 Love AI</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <p class="eyebrow">good morning, good night &amp; everything in between, my</p>
+    <h1 class="script-font shimmer">Fats</h1>
+    <div class="love-counter glass">
+      <p class="counter-label">he has loved you for</p>
+      <div class="counter-boxes">
+        <div class="cbox"><span id="cDays">0</span><small>days</small></div>
+        <div class="cbox"><span id="cHours">0</span><small>hrs</small></div>
+        <div class="cbox"><span id="cMins">0</span><small>min</small></div>
+        <div class="cbox"><span id="cSecs">0</span><small>sec</small></div>
+      </div>
+      <p class="counter-sub">since 23.02.2025 · and every second still counts ⏳</p>
+    </div>
+    <div class="countdowns">
+      <div class="cd-pill glass">🎂 your birthday in <b id="cdBday">…</b></div>
+      <div class="cd-pill glass">💍 your anniversary in <b id="cdAnni">…</b></div>
+    </div>
+    <button class="big-btn hug" id="hugBtn">🤗 need a hug?</button>
+  </header>
+
+  <main class="bento">
+
+    <!-- AI DAILY LETTER -->
+    <section id="letter" class="card wide reveal ai-glow">
+      <div class="card-head">
+        <h2>💌 Today's Letter From Him</h2>
+        <span class="chip ai-chip">✨ AI-written · new every day</span>
+      </div>
+      <p class="letter-date muted" id="letterDate"></p>
+      <p class="letter-body script-font" id="letterBody">loading today's letter…</p>
+      <p class="letter-poem" id="letterPoem"></p>
+      <p class="sig">— forever, your Tirth ❤️</p>
+    </section>
+
+    <!-- DUBAI WEATHER + WORLD FX -->
+    <section id="weather" class="card reveal">
+      <div class="card-head"><h2>🌤️ Dubai Today</h2><span class="chip">plan your look, cutie</span></div>
+      <div class="weather-now" id="weatherNow">checking the sky…</div>
+      <p class="muted tiny" id="weatherTip"></p>
+      <div class="fx-box">
+        <p class="tiny muted">💱 money magic — every currency, updated daily</p>
+        <div class="fx-row">
+          <input id="fxAmt" class="text-input slim" type="number" placeholder="amount" value="100" inputmode="decimal" />
+        </div>
+        <div class="fx-row">
+          <select id="fxFrom" class="text-input"></select>
+          <span class="fx-swap" id="fxSwap">⇄</span>
+          <select id="fxTo" class="text-input"></select>
+        </div>
+        <p id="fxResult" class="fx-result"></p>
+        <small class="muted tiny" id="fxRate"></small>
+      </div>
+    </section>
+
+    <!-- HOROSCOPE -->
+    <section id="horo" class="card reveal">
+      <div class="card-head"><h2>🔮 Your Stars Today</h2><span class="chip ai-chip">♑ Capricorn</span></div>
+      <p id="horoText" class="horo-text script-font">reading your stars…</p>
+      <small class="muted tiny">15 jan baby — best star sign, obviously (he may be biased)</small>
+    </section>
+
+    <!-- MOOD DIARY -->
+    <section id="mood" class="card reveal">
+      <div class="card-head"><h2>😊 How's my love feeling?</h2></div>
+      <div class="mood-row" id="moodRow"></div>
+      <input id="moodNote" class="text-input" placeholder="one line about your day… (optional)" maxlength="120" />
+      <button class="big-btn" id="moodSave">save today's mood 💾</button>
+      <div class="mood-history" id="moodHistory"></div>
+      <small class="muted">he checks this every day to know how his Fats is doing 🥺</small>
+    </section>
+
+    <!-- FOOD DECIDER -->
+    <section id="food" class="card reveal">
+      <div class="card-head"><h2>🍽️ What Should We Eat?</h2></div>
+      <p id="foodPick" class="food-pick script-font">tap the button, jaan…</p>
+      <div class="hero-btns">
+        <button class="big-btn" id="foodBtn">🎲 decide for us</button>
+        <button class="big-btn ghost" id="foodAI">🤖 full dinner plan</button>
+      </div>
+    </section>
+
+    <!-- WATER -->
+    <section id="water" class="card reveal">
+      <div class="card-head">
+        <h2>💧 Water, jaan!</h2>
+        <span class="chip">🔥 streak: <b id="waterStreak">0</b> days</span>
+      </div>
+      <p class="muted tiny">an email reminds you every hour, 11 AM – 11 PM 🕚 tap below each time you drink</p>
+      <div class="drops" id="drops"></div>
+      <p id="waterStatus" class="water-status script-font"></p>
+      <div class="hero-btns">
+        <button class="big-btn water-btn" id="drinkBtn">💧 drank a glass</button>
+        <button class="big-btn ghost" id="notifBtn">🔔 ping me here too</button>
+      </div>
+    </section>
+
+    <!-- MUSIC -->
+    <section id="music" class="card reveal">
+      <div class="card-head"><h2>🎵 Our Vibe</h2></div>
+      <iframe id="spotifyFrame" style="border-radius:16px" width="100%" height="152" frameborder="0"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    </section>
+
+    <!-- PHOTO MEMORIES -->
+    <section id="photos" class="card wide reveal">
+      <div class="card-head">
+        <h2>📸 Our Memories</h2>
+        <span class="chip">safe on your phone 🤍</span>
+      </div>
+      <p class="muted tiny">selfies, dates, silly screenshots — save your favorite moments right here</p>
+      <div class="note-form">
+        <label class="big-btn ghost file-btn">📷 add a photo
+          <input type="file" id="photoInput" accept="image/*" class="hidden" />
+        </label>
+        <input id="photoCaption" class="text-input" placeholder="caption this memory…" maxlength="80" />
+      </div>
+      <div id="photoGrid" class="photo-grid"></div>
+    </section>
+
+    <!-- NOTE WALL -->
+    <section id="notes" class="card wide reveal">
+      <div class="card-head">
+        <h2>❤️ Our Note Wall</h2>
+        <span class="chip live-chip">⚡ live sync</span>
+      </div>
+      <p class="muted tiny">he leaves notes here from his phone — check in anytime, there's probably something waiting for you</p>
+      <div class="note-form">
+        <select id="noteFrom" class="text-input slim">
+          <option value="Tirth">💙 from Tirth</option>
+          <option value="Fats">🩷 from Fats</option>
+        </select>
+        <input id="noteText" class="text-input" placeholder="write something soft…" maxlength="200" />
+        <button class="big-btn" id="noteAdd">pin it 📌</button>
+      </div>
+      <div id="notesWall" class="notes-wall"></div>
+    </section>
+
+    <!-- TRAVEL -->
+    <section id="travel" class="card wide reveal">
+      <div class="card-head">
+        <h2>✈️ Our Travel Dreams</h2>
+        <span class="chip live-chip">⚡ synced</span>
+      </div>
+      <p class="muted tiny">every place you want to see — he's saving them all, and one by one they'll come true 🤍</p>
+      <div class="note-form">
+        <input id="destName" class="text-input" placeholder="country or city… (e.g. Georgia 🇬🇪)" maxlength="60" />
+        <input id="destNote" class="text-input" placeholder="why? (e.g. snow + mountains 🏔️)" maxlength="100" />
+        <button class="big-btn" id="destAdd">add dream 🌍</button>
+      </div>
+      <div id="destList" class="dest-list"></div>
+
+      <div class="itinerary-box">
+        <h3 class="subhead">🗺️ AI Trip Planner</h3>
+        <div class="note-form">
+          <input id="tripPlace" class="text-input" placeholder="where to, my love? (any country/city)" maxlength="60" />
+          <input id="tripDays" class="text-input slim" type="number" min="1" max="14" placeholder="days" inputmode="numeric" />
+          <button class="big-btn" id="tripPlan">plan it ✨</button>
+        </div>
+        <div id="tripResult" class="trip-result"></div>
+      </div>
+    </section>
+
+    <!-- QUESTION OF THE DAY -->
+    <section id="question" class="card reveal">
+      <div class="card-head"><h2>❓ Question of the Day</h2><span class="chip">for both of you</span></div>
+      <p class="qod script-font" id="qodText"></p>
+      <input id="ansFats" class="text-input" placeholder="🩷 Fats answers…" maxlength="150" />
+      <input id="ansTirth" class="text-input" placeholder="💙 Tirth answers…" maxlength="150" />
+      <button class="big-btn" id="ansSave">lock in today's answers 💞</button>
+      <div id="ansShow" class="ans-show"></div>
+    </section>
+
+    <!-- PING TIRTH -->
+    <section id="ping" class="card reveal">
+      <div class="card-head">
+        <h2>📮 Ping Tirth</h2>
+        <span class="chip">⚡ lands in his inbox</span>
+      </div>
+      <p class="muted tiny">one tap = an instant email to him, wherever he is</p>
+      <div class="ping-grid">
+        <button class="ping-btn" data-ping="😘 KISS DELIVERY — Fats just sent you a kiss through the website!">😘<small>kiss</small></button>
+        <button class="ping-btn" data-ping="🥺 MISSING YOU — Fats misses you right now. Come home soon.">🥺<small>miss you</small></button>
+        <button class="ping-btn" data-ping="☎️ CALL ME — Fats wants to hear your voice. Call her NOW.">☎️<small>call me</small></button>
+        <button class="ping-btn" data-ping="🍫 CHOCOLATE EMERGENCY — this is not a drill. Bring chocolate immediately.">🍫<small>emergency</small></button>
+      </div>
+      <div class="note-form">
+        <input id="pingText" class="text-input" placeholder="or write your own message to him…" maxlength="200" />
+        <button class="big-btn" id="pingSend">send 📮</button>
+      </div>
+      <p class="muted tiny" id="pingStatus"></p>
+    </section>
+
+    <!-- LISTS -->
+    <section id="list" class="card reveal">
+      <div class="card-head">
+        <h2>📝 Our Lists</h2>
+        <span class="chip live-chip">⚡ synced</span>
+      </div>
+      <div class="game-tabs">
+        <button class="tab-btn active" data-list="shared">🛒 our list</button>
+        <button class="tab-btn" data-list="wishlist">🎁 fats' wishlist</button>
+      </div>
+      <div class="note-form">
+        <input id="todoText" class="text-input" placeholder="add something…" maxlength="100" />
+        <button class="big-btn" id="todoAdd">add ➕</button>
+      </div>
+      <ul id="todoList" class="todo-list"></ul>
+      <small class="muted tiny" id="listHint">groceries, plans, "don't let me forget" — one list for both of you</small>
+    </section>
+
+    <!-- MOVIES -->
+    <section id="movies" class="card reveal">
+      <div class="card-head"><h2>🎬 Movie Night</h2><span class="chip live-chip">⚡ synced</span></div>
+      <div class="note-form">
+        <input id="movieSearch" class="text-input" placeholder="search any movie or series…" maxlength="60" />
+        <button class="big-btn" id="movieSearchBtn">search 🔍</button>
+      </div>
+      <div id="movieResults" class="movie-grid"></div>
+      <h3 class="subhead">❤️ your watchlist</h3>
+      <div id="watchlist" class="movie-grid"></div>
+    </section>
+
+    <!-- LOVE AI -->
+    <section id="bot" class="card wide reveal ai-glow">
+      <div class="card-head">
+        <h2>💕 Love AI</h2>
+        <span class="chip ai-chip">🤖 his AI twin · Dubai expert · trip planner</span>
+      </div>
+      <p class="muted tiny">missing him? hungry? planning a trip? Love AI is awake all day, just for you</p>
+      <div id="chatBox" class="chat-box"></div>
+      <div class="quick-chips">
+        <button class="qchip" data-q="compliment me 🥺">compliment me 🥺</button>
+        <button class="qchip" data-q="plan a cute date for us in Dubai this weekend">💘 dubai date</button>
+        <button class="qchip" data-q="which app has the cheapest biryani delivery today?">🍛 cheapest biryani?</button>
+        <button class="qchip" data-q="we want to visit Georgia for 5 days, make an itinerary">🇬🇪 georgia trip</button>
+        <button class="qchip" data-q="i miss you">i miss you</button>
+      </div>
+      <div class="note-form">
+        <input id="chatInput" class="text-input" placeholder="ask Love AI anything…" maxlength="300" />
+        <button class="big-btn" id="chatSend">send 💬</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p class="script-font">Fats + Tirth = forever</p>
+    <p class="muted">handmade with ❤️ by your husband · married 23.02.2025 · this site loves you even when he's asleep</p>
+    <p class="muted tiny">📲 tip: tap "Add to Home Screen" so it lives on your phone like an app</p>
+  </footer>
+
+  <div id="overlay"></div>
+  <div id="photoViewer" class="viewer hidden"><span id="viewerClose">✖</span><img id="viewerImg" alt="memory" /></div>
+
+  <div id="lockScreen" class="lock-screen">
+    <div class="lock-card glass" id="lockCard">
+      <h2 class="script-font">for my wife only 💕</h2>
+      <p class="muted tiny">prove you're my Fats</p>
+      <input id="lockName" class="text-input" placeholder="husband's name 🙈" autocomplete="off" />
+      <input id="lockPass" class="text-input" type="password" placeholder="boop? 🔑" autocomplete="off" />
+      <button class="big-btn" id="lockBtn">unlock my world 💘</button>
+      <p class="muted tiny" id="lockMsg"></p>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

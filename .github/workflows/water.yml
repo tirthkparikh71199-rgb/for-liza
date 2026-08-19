@@ -1,0 +1,20 @@
+name: 💧 Hourly Water Reminder
+on:
+  schedule:
+    - cron: "0 * * * *"   # every hour; script skips 11 PM–11 AM Gulf time
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Send water reminder email
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          WIFE_EMAIL: ${{ secrets.WIFE_EMAIL }}
+        run: python scripts/send_email.py water
