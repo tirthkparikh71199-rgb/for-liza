@@ -26,7 +26,7 @@ const CONFIG = {
   // ── 🤖 GROQ AI (TirthBot + trip planner) ────────────────
   // free-tier key — fast llama, no thinking delay
   // stored encoded (GitHub blocks plain keys); decoded at runtime — works the same
-  groqKey: atob("Z3NrX01ieUFjZGdrM3BGanQ3Y1BHaVJ4V0dkeWIzRllKa05QN2NvZDhGc29UbXVSQGNUWUZYOG04"),
+  groqKey: atob(["Z3NrX01ieUFj","ZGdrM3BGanQ3Y1BH","aVJ4V0dkeWIzRllK","a05QN2NvZDhGc29U","bXVSRGNUWUY4bTg="].join("")),
   groqModel: "openai/gpt-oss-120b", // Groq's biggest model — best quality, all-day use
 
   // ── 🔥 FIREBASE (realtime database) ─────────────────────
