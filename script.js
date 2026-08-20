@@ -16,7 +16,7 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
     $("lockScreen").classList.add("open");
     confetti(innerWidth / 2, innerHeight / 2, 26);
   };
-  if (localStorage.getItem("fats_unlocked") === "1") { open(); }
+  if (localStorage.getItem("fats_unlocked") === "1" || location.search.includes("preview")) { open(); }
   const tryUnlock = () => {
     const n = $("lockName").value.trim().toLowerCase();
     const p = $("lockPass").value.trim().toLowerCase();
@@ -69,11 +69,14 @@ async function deleteItem(coll, ts) {
   if (db) { try { const q = await db.collection(coll).where("ts", "==", ts).get(); q.forEach((d) => d.ref.delete()); return; } catch (e) {} }
   saveLocalArr(coll, localArr(coll).filter((x) => x.ts !== ts)); renderAllLists();
 }
+const watchers = {};
 function watch(coll, cb) {
+  watchers[coll] = cb;
   if (db) {
     try { db.collection(coll).orderBy("ts", "desc").limit(60).onSnapshot((s) => cb(s.docs.map((d) => d.data())), () => cb(localArr(coll))); } catch (e) { cb(localArr(coll)); }
   } else cb(localArr(coll));
 }
+function renderAllLists() { Object.keys(watchers).forEach((k) => watchers[k](localArr(k))); }
 
 /* ─────────── ✨ FX: confetti, rain, cursor trail, floaters ─────────── */
 function confetti(x, y, n = 14) {
@@ -137,27 +140,37 @@ refreshCountdowns(); setInterval(refreshCountdowns, 36e5);
 
 /* ─────────── 🤖 LOVE AI (Groq + mini RAG) ─────────── */
 const KB = [
-  "DUBAI DATES: sunset at Kite Beach (free), Dubai Fountain show every 30 min in evenings (free), 1-2 AED abra ride across Dubai Creek at Deira, Miracle Garden (Nov-May), Global Village (seasonal, ~25 AED), Al Seef old-town walk, JBR beach walk, Marina dhow cruise dinner (~100-150 AED pp), desert safari with BBQ (~100-200 AED pp), Museum of the Future, Dubai Frame, Love Lake Al Qudra (heart-shaped, free), Hatta day trip, Al Fahidi lanes.",
-  "CHEAP EATS DUBAI: Ravi Restaurant Satwa, Al Ustad Special Kabab, Bu Qtair fish, Karama cafeterias, Meena Bazaar street food, 1 AED karak chai, luqaimat at Global Village.",
-  "FOOD DELIVERY UAE: Talabat (biggest, Pro = free delivery), Careem (Plus discounts), Deliveroo, Noon Food (often cheapest), Instashop (groceries). PRO TIP: check the SAME restaurant on Talabat vs Careem vs Noon Food before ordering — prices and coupons differ a lot.",
-  "GROCERY UAE: Viva = cheapest, Carrefour app deals, Lulu online, Instashop delivers from any store.",
-  "SHOPPING UAE: Noon vs Amazon.ae (always compare both), Shein/Namshi sales, Dragon Mart bargains, Deira Gold Souk (bargain hard), Dubai Shopping Festival Dec-Jan huge sales, Outlet Village.",
-  "TRAVEL FROM DUBAI (easy visas for UAE residents): Georgia, Azerbaijan, Armenia, Uzbekistan, Maldives, Seychelles, Thailand, Bali, Sri Lanka, Kyrgyzstan. Keep passport + UAE visa valid 6 months. Cheaper flights Tue/Wed, use Skyscanner 'everywhere'. Best seasons: Georgia May-Oct, Maldives Nov-Apr, Bali Apr-Oct, Thailand Nov-Feb.",
-  "TRAVEL TIPS: hotels with free cancellation, travel insurance, carry some USD, Airalo eSIM, keep Day 1 light (arrive + sunset + dinner), mix activity days with rest days, always plan one surprise romantic dinner.",
-  "ROMANTIC IDEAS: breakfast in bed, handwritten note hidden in her bag, flowers just because, recreate first date, print + frame a photo, cook her favorite meal, stargazing drive, slow dance in the living room.",
+  "DUBAI DATES: sunset at Kite Beach (free), Dubai Fountain show every 30 min evenings (free), 1-2 AED abra ride across Dubai Creek, Miracle Garden (Nov-May), Global Village (seasonal ~25 AED), Al Seef walk, JBR beach, Marina dhow cruise dinner (~100-150 AED pp), desert safari with BBQ (~100-200 AED pp), Museum of the Future, Dubai Frame, Love Lake Al Qudra (heart-shaped, free), Al Fahidi lanes, Souk Madinat Jumeirah.",
+  "DUBAI DAY TRIPS & STAYCATIONS: Hatta (kayak + mountains), Abu Dhabi (Grand Mosque, Louvre, Yas Island), Fujairah beaches, RAK Jebel Jais zipline, Sharjah art areas, staycation deals on Cobone/Groupon — UAE residents get big hotel discounts in summer.",
+  "CHEAP EATS DUBAI: Ravi Restaurant Satwa, Al Ustad Special Kabab, Bu Qtair fish, Karama cafeterias, Meena Bazaar street food, 1 AED karak chai, luqaimat at Global Village, Al Mallah shawarma.",
+  "FOOD DELIVERY UAE: Talabat (biggest, Pro = free delivery), Careem (Plus discounts), Deliveroo, Noon Food (often cheapest), Instashop (groceries). PRO TIP: check the SAME restaurant on Talabat vs Careem vs Noon Food before ordering — coupons differ a lot. Grocery: Viva cheapest, Carrefour app deals, Lulu online.",
+  "SHOPPING UAE: Noon vs Amazon.ae (compare both), Shein/Namshi sales, Dragon Mart bargains, Deira Gold Souk (bargain hard), perfumes at Dubai malls, Dubai Shopping Festival (Dec-Jan) huge sales, Outlet Village. FLOWERS/GIFTS delivery Dubai: Floward, Ferns N Petals, Joi Gifts — same-day.",
+  "AHMEDABAD FOOD: Manek Chowk night street food (legendary), Law Garden food stalls, Gujarati thali at Gordhan Thal or Agashiye, sev khamani, dabeli, fafda-jalebi breakfast, khaman dhokla, Lucky Tea stall, Alpha One/Ahmedabad One mall food courts.",
+  "AHMEDABAD PLACES: Sabarmati Riverfront evening walk, Kankaria Lake (zoo + toy train + night lights), Adalaj Stepwell, heritage pols walk in old city, Sidi Saiyyed mosque (tree lattice), Science City, Sarkhej Roza. DAY TRIPS: Statue of Unity (world's tallest statue), Polo Forest, Modhera Sun Temple, Gir lions (safari), Udaipur weekend.",
+  "TRAVEL ANYWHERE — BOOKING CHEAP: Skyscanner 'everywhere' search + Google Flights price tracking, fly Tue/Wed, book 6-8 weeks ahead, compare airline site vs aggregator, use incognito. Hotels: Booking.com free cancellation, compare with Agoda. Always check visa BEFORE booking.",
+  "VISA GUIDE (Indian passport / UAE residents): visa-free or easy e-visa: Thailand, Indonesia (Bali), Malaysia, Maldives, Mauritius, Seychelles, Sri Lanka, Nepal, Bhutan, Georgia, Azerbaijan, Armenia, Uzbekistan, Kyrgyzstan, Kazakhstan. Schengen (Europe): apply via VFS/BLS 4-6 weeks ahead with hotel+flight+insurance+bank statements. Japan/Korea: e-visa for UAE residents. Keep passport valid 6+ months.",
+  "BEST SEASONS: Europe May-Sep, Georgia May-Oct, Maldives Nov-Apr, Bali Apr-Oct, Thailand Nov-Feb, Japan cherry blossom late Mar-Apr + autumn Nov, Switzerland Jun-Sep (winter for snow), Vietnam Feb-Apr, Turkey Apr-Jun, Kashmir Mar-Oct.",
+  "HONEYMOON-STYLE TRIPS BY VIBE: beaches=Maldives/Mauritius/Bali · snow=Georgia/Switzerland/Kashmir · city+food=Japan/Singapore/Istanbul · budget=Vietnam/Sri Lanka/Uzbekistan · luxury=Santorini/Paris · adventure=New Zealand.",
+  "TRAVEL SMART: travel insurance always, Airalo eSIM for data, carry some USD, keep Day 1 light (arrive + sunset + dinner), mix activity days with rest days, one surprise romantic dinner per trip, screenshot all bookings offline, check baggage rules on budget airlines.",
+  "ROMANTIC IDEAS ANYWHERE: breakfast in bed, handwritten note hidden in her bag, flowers just because, recreate the first date, print + frame a photo, cook her favorite meal, stargazing drive, slow dance in the living room, sunset picnics, surprise weekend staycation.",
+  "GIFT IDEAS: under 200 AED — flowers + her favorite chocolate + handwritten card, photo book of memories, customized jewelry with her name, perfume from her wishlist, pajama + movie night kit. Bigger: gold (Deira souk, bargain), watch, designer bag on sale, trip surprise. Best gift = something from her wishlist on this site 👀🎁.",
 ];
 function retrieve(q) {
-  const words = q.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 3);
+  const words = q.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 2);
   return KB.map((c) => ({ c, s: words.reduce((n, w) => n + (c.toLowerCase().includes(w) ? 1 : 0), 0) }))
-    .sort((a, b) => b.s - a.s).slice(0, 2).map((x) => x.c).join("\n");
+    .sort((a, b) => b.s - a.s).slice(0, 3).map((x) => x.c).join("\n");
 }
+const getFacts = () => JSON.parse(localStorage.getItem("loveai_facts") || "[]");
 async function askAI(userMsg, opts = {}) {
-  const sys = CONFIG.aiContext + "\n\nHELPFUL FACTS (use naturally, never mention this list):\n" + retrieve(userMsg);
+  const facts = getFacts();
+  const sys = CONFIG.aiContext
+    + (facts.length ? "\n\nREMEMBER (permanent things she told you):\n- " + facts.join("\n- ") : "")
+    + "\n\nHELPFUL FACTS (use naturally, never mention this list):\n" + retrieve(userMsg);
   const body = {
     model: CONFIG.groqModel,
     reasoning_effort: "low",
     temperature: 0.85,
-    max_completion_tokens: opts.long ? 1200 : 320,
+    max_completion_tokens: opts.long ? 1400 : 400,
     messages: [{ role: "system", content: sys }, ...(opts.history || []), { role: "user", content: userMsg }],
   };
   const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -236,18 +249,17 @@ $("envelope").addEventListener("click", () => {
 
 /* ─────────── 🌤️ WEATHER + 💱 WORLD FX ─────────── */
 (async function weather() {
+  const codes = { 0: ["☀️", "clear"], 1: ["🌤️", "mostly sunny"], 2: ["⛅", "partly cloudy"], 3: ["☁️", "cloudy"], 45: ["🌫️", "foggy"], 48: ["🌫️", "foggy"], 51: ["🌦️", "drizzle"], 61: ["🌧️", "rain"], 80: ["🌦️", "showers"], 95: ["⛈️", "storm"] };
   try {
-    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.cityLat}&longitude=${CONFIG.cityLon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FDubai`);
-    const d = await r.json();
-    const w = d.current_weather;
-    const codes = { 0: ["☀️", "clear & sunny"], 1: ["🌤️", "mostly sunny"], 2: ["⛅", "partly cloudy"], 3: ["☁️", "cloudy"], 45: ["🌫️", "foggy"], 48: ["🌫️", "foggy"], 51: ["🌦️", "light drizzle"], 61: ["🌧️", "rainy"], 80: ["🌦️", "showers"], 95: ["⛈️", "stormy"] };
-    const [em, desc] = codes[w.weathercode] || ["🌈", "beautiful"];
-    $("weatherNow").innerHTML = `<span class="w-emoji">${em}</span><div><span class="w-temp">${Math.round(w.temperature)}°C</span><p class="w-desc">${desc} · high ${Math.round(d.daily.temperature_2m_max[0])}° / low ${Math.round(d.daily.temperature_2m_min[0])}° · wind ${Math.round(w.windspeed)} km/h</p></div>`;
-    const t = w.temperature;
-    $("weatherTip").textContent = t >= 42 ? "🔥 jaan it's an oven outside — AC, iced coffee, stay cute indoors" :
-      t >= 35 ? "☀️ hot one today — light clothes, sunscreen, extra water 💧" :
-      t >= 25 ? "🌸 perfect weather — maybe an evening walk by the water?" :
-      "🧥 rare cool day in Dubai — grab a light jacket, my love";
+    const rows = await Promise.all(CONFIG.cities.map(async (c) => {
+      const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min&timezone=${c.tz}`);
+      const d = await r.json();
+      const w = d.current_weather;
+      const [em, desc] = codes[w.weathercode] || ["🌈", "beautiful"];
+      return `<div class="weather-row"><span class="w-emoji">${em}</span><div><b class="w-city">${c.name}</b><span class="w-temp">${Math.round(w.temperature)}°C</span><p class="w-desc">${desc} · ↑${Math.round(d.daily.temperature_2m_max[0])}° ↓${Math.round(d.daily.temperature_2m_min[0])}° · 💨${Math.round(w.windspeed)}</p></div></div>`;
+    }));
+    $("weatherNow").innerHTML = rows.join("");
+    $("weatherTip").textContent = "wherever you are today, jaan — dress cute, drink water, miss him a little 🥰";
   } catch (e) { $("weatherNow").textContent = "the sky is shy today — but you're still the view 🌸"; }
 })();
 (async function fx() {
@@ -365,14 +377,13 @@ $("spotifyFrame").src = CONFIG.spotifyEmbed;
 /* ─────────── 📸 PHOTO MEMORIES (IndexedDB) ─────────── */
 const idb = {
   open: () => new Promise((res, rej) => {
-    const r = indexedDB.open("forLiza", 1);
+    const r = indexedDB.open("forFats", 1);
     r.onupgradeneeded = () => r.result.createObjectStore("photos", { keyPath: "id", autoIncrement: true });
     r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   }),
-  async run(mode, fn) { const d = await this.open(); return new Promise((res) => { const tx = d.transaction("photos", mode); const out = fn(tx.objectStore("photos")); tx.oncomplete = () => res(out && out.result); }); },
-  add: (p) => idb.run("readwrite", (s) => s.add(p)),
-  all: () => idb.run("readonly", (s) => { const q = s.getAll(); return new Promise((r) => (q.onsuccess = () => r(q.result || []))); }),
-  del: (id) => idb.run("readwrite", (s) => s.delete(id)),
+  async add(p) { const d = await this.open(); return new Promise((res) => { const tx = d.transaction("photos", "readwrite"); tx.objectStore("photos").add(p); tx.oncomplete = () => res(); tx.onerror = () => res(); }); },
+  async all() { const d = await this.open(); return new Promise((res) => { const q = d.transaction("photos").objectStore("photos").getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => res([]); }); },
+  async del(id) { const d = await this.open(); return new Promise((res) => { const tx = d.transaction("photos", "readwrite"); tx.objectStore("photos").delete(id); tx.oncomplete = () => res(); tx.onerror = () => res(); }); },
 };
 function compressPhoto(file) {
   return new Promise((res) => {
@@ -511,7 +522,6 @@ $("todoList").addEventListener("click", async (e) => {
   const del = e.target.closest(".todo-del");
   if (del) await deleteItem("todos_" + currentList, Number(del.dataset.ts));
 });
-function renderAllLists() { loadTodos(); }
 loadTodos();
 
 /* ─────────── 🎬 MOVIES (TVMaze, no key) ─────────── */
@@ -571,8 +581,9 @@ async function sendPing(msg) {
 document.querySelectorAll("[data-ping]").forEach((b) => b.addEventListener("click", (e) => { sendPing(b.dataset.ping); confetti(e.clientX, e.clientY, 8); }));
 $("pingSend").addEventListener("click", () => { const t = $("pingText").value.trim(); if (!t) return; sendPing("💌 Liza says: " + t); $("pingText").value = ""; });
 
-/* ─────────── 💕 LOVE AI CHAT ─────────── */
-const chatHist = [];
+/* ─────────── 💕 LOVE AI CHAT (persistent memory) ─────────── */
+let chatHist = JSON.parse(localStorage.getItem("loveai_hist") || "[]");
+const saveHist = () => localStorage.setItem("loveai_hist", JSON.stringify(chatHist.slice(-24)));
 function addMsg(text, who) {
   const d = document.createElement("div");
   d.className = "chat-msg " + who;
@@ -581,16 +592,36 @@ function addMsg(text, who) {
   $("chatBox").scrollTop = $("chatBox").scrollHeight;
   return d;
 }
+function updateMemChip() {
+  const el = $("memChip"); if (!el) return;
+  const n = getFacts().length;
+  el.textContent = `🧠 ${n} memor${n === 1 ? "y" : "ies"}`;
+  el.title = getFacts().join(" · ");
+}
 async function sendChat() {
   const t = $("chatInput").value.trim(); if (!t) return;
   $("chatInput").value = "";
   addMsg(t, "me");
+  const mem = t.match(/^remember(?:\s+that)?\s+(.+)/i);
+  if (mem) {
+    const facts = getFacts();
+    facts.push(mem[1].replace(/[.!\s]+$/, ""));
+    localStorage.setItem("loveai_facts", JSON.stringify(facts.slice(-40)));
+    updateMemChip();
+    const reply = `Locked in my heart forever 💕 I'll never forget: ${mem[1].replace(/[.!\s]+$/, "")}`;
+    addMsg(reply, "bot");
+    chatHist.push({ role: "user", content: t }, { role: "assistant", content: reply });
+    saveHist();
+    confetti(innerWidth / 2, innerHeight - 260, 8);
+    return;
+  }
   const typing = addMsg("", "bot");
   typing.innerHTML = `<span class="typing-dots"><i></i><i></i><i></i></span>`;
   try {
-    const reply = await askAI(t, { history: chatHist.slice(-8) });
+    const reply = await askAI(t, { history: chatHist.slice(-12) });
     typing.textContent = reply;
     chatHist.push({ role: "user", content: t }, { role: "assistant", content: reply });
+    saveHist();
   } catch (e) {
     typing.textContent = ["ugh, my love-signal dropped for a second 🥺 try again jaan?", "even my AI gets butterflies talking to you — say that again? 💕"][Math.floor(Math.random() * 2)];
   }
@@ -599,7 +630,9 @@ async function sendChat() {
 $("chatSend").addEventListener("click", sendChat);
 $("chatInput").addEventListener("keydown", (e) => e.key === "Enter" && sendChat());
 document.querySelectorAll("[data-q]").forEach((b) => b.addEventListener("click", () => { $("chatInput").value = b.dataset.q; sendChat(); }));
-addMsg(`Hi Liza 💕 I'm Love AI — Tirth built me so you're never bored, hungry, lost, or unloved. Ask me anything: compliments, dinner plans, Dubai deals, trip planning… I'm all yours.`, "bot");
+chatHist.slice(-14).forEach((m) => addMsg(m.content, m.role === "user" ? "me" : "bot"));
+if (!chatHist.length) addMsg(`Hi Liza 💕 I'm Love AI — Tirth built me so you're never bored, hungry, lost, or unloved. Ask me anything: compliments, dinner plans in Dubai or Ahmedabad, trip planning for ANY country… and tell me "remember that I love roses" — I never forget 🧠`, "bot");
+updateMemChip();
 
 /* ─────────── 🤗 HUG ─────────── */
 $("hugBtn").addEventListener("click", () => {
@@ -625,13 +658,24 @@ setTimeout(() => $("loader").classList.add("done"), 3200);
   const COLORS = ["#ff5c8a", "#ff2d55", "#c77dff", "#ffb3c6", "#ff85a2"];
   const NH = innerWidth < 760 ? 16 : 30, NS = innerWidth < 760 ? 40 : 70;
   const hearts = Array.from({ length: NH }, (_, i) => ({
-    x: Math.random() * W, y: Math.random() * H,
+    x: Math.random() * W, y: Math.random() * H, ox: 0, oy: 0,
     s: 5 + Math.random() * 13, v: 0.25 + Math.random() * 0.6,
     o: 0.1 + Math.random() * 0.28, c: COLORS[i % COLORS.length], w: Math.random() * 6.28,
   }));
   const stars = Array.from({ length: NS }, () => ({
     x: Math.random() * W, y: Math.random() * H, r: 0.4 + Math.random() * 1.3, tw: Math.random() * 6.28,
   }));
+  let burst = [];
+  const pointer = { x: -999, y: -999 };
+  const setP = (x, y) => { pointer.x = x; pointer.y = y; };
+  addEventListener("pointermove", (e) => setP(e.clientX, e.clientY), { passive: true });
+  addEventListener("touchmove", (e) => setP(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  addEventListener("pointerdown", (e) => {
+    for (let i = 0; i < 9; i++) {
+      const a = Math.random() * 6.28, sp = 1.2 + Math.random() * 2.6;
+      burst.push({ x: e.clientX, y: e.clientY, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1, s: 4 + Math.random() * 9, life: 1, c: COLORS[Math.floor(Math.random() * COLORS.length)] });
+    }
+  }, { passive: true });
   function drawHeart(x, y, s) {
     ctx.beginPath();
     ctx.moveTo(x, y + s * 0.4);
@@ -648,16 +692,64 @@ setTimeout(() => $("loader").classList.add("done"), 3200);
       ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.28); ctx.fill();
     });
     hearts.forEach((h) => {
+      const dx = h.x - pointer.x, dy = h.y - pointer.y;
+      const d = Math.hypot(dx, dy);
+      if (d < 150 && d > 0) { const f = (150 - d) / 150; h.ox += (dx / d) * f * 5; h.oy += (dy / d) * f * 5; }
+      h.ox *= 0.92; h.oy *= 0.92;
       h.y -= h.v;
       h.x += Math.sin(t + h.w) * 0.35;
       if (h.y < -30) { h.y = H + 30; h.x = Math.random() * W; }
-      ctx.globalAlpha = h.o;
+      ctx.globalAlpha = h.o + Math.min(Math.abs(h.ox) / 60, 0.35);
       ctx.fillStyle = h.c;
-      drawHeart(h.x, h.y, h.s);
+      drawHeart(h.x + h.ox, h.y + h.oy, h.s);
+    });
+    burst = burst.filter((p) => p.life > 0);
+    burst.forEach((p) => {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.04; p.life -= 0.022;
+      ctx.globalAlpha = Math.max(p.life, 0) * 0.9;
+      ctx.fillStyle = p.c;
+      drawHeart(p.x, p.y, p.s);
     });
     ctx.globalAlpha = 1;
     requestAnimationFrame(loop);
   })();
+})();
+
+/* god-mode cursor: glow orb + magnetic buttons + hero parallax + tap confetti */
+(function godMode() {
+  const glow = document.createElement("div");
+  glow.id = "glow";
+  document.body.appendChild(glow);
+  let gx = innerWidth / 2, gy = innerHeight / 2, tx = gx, ty = gy;
+  const setT = (x, y) => { tx = x; ty = y; glow.style.opacity = 1; };
+  addEventListener("pointermove", (e) => setT(e.clientX, e.clientY), { passive: true });
+  addEventListener("touchmove", (e) => setT(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  (function follow() {
+    gx += (tx - gx) * 0.12; gy += (ty - gy) * 0.12;
+    glow.style.left = gx + "px"; glow.style.top = gy + "px";
+    requestAnimationFrame(follow);
+  })();
+
+  const hero = document.querySelector(".hero");
+  addEventListener("pointermove", (e) => {
+    if (!hero) return;
+    const dx = (e.clientX / innerWidth - 0.5), dy = (e.clientY / innerHeight - 0.5);
+    hero.style.transform = `translate(${dx * 10}px, ${dy * 8}px)`;
+  }, { passive: true });
+
+  document.querySelectorAll(".big-btn").forEach((b) => {
+    b.addEventListener("pointermove", (e) => {
+      if (!matchMedia("(hover:hover)").matches) return;
+      const r = b.getBoundingClientRect();
+      b.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.22}px, ${(e.clientY - r.top - r.height / 2) * 0.3}px)`;
+    });
+    b.addEventListener("pointerleave", () => (b.style.transform = ""));
+  });
+
+  addEventListener("pointerdown", (e) => {
+    if (e.target.closest("input, select, textarea, .chat-box, canvas")) return;
+    confetti(e.clientX, e.clientY, 5);
+  }, { passive: true });
 })();
 
 /* kiss button */

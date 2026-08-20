@@ -2,7 +2,7 @@
 """✨ Generates today's AI love letter + poem for Liza → daily.json"""
 import os, json, datetime, urllib.request
 
-PROMPT = """Write today's love letter from Tirth to his wife Liza (married 23 Feb 2025, living in Dubai).
+PROMPT = """Write today's love letter from Tirth to his wife Liza (married 23 Feb 2025, their life is split between Dubai and Ahmedabad).
 Rules: 70-100 words, warm, playful, deeply in love, mention the date subtly or the season. Pet names: Liza, jaan, cutie. Never crude.
 Then a 4-line cute rhyming poem.
 Format EXACTLY:

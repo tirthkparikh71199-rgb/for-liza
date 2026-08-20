@@ -358,3 +358,11 @@ footer .script-font { font-size: 2.2rem; color: var(--pink-soft); text-shadow: 0
   background: rgba(20,5,15,0.75); backdrop-filter: blur(6px); border-radius: 20px; z-index: 6; animation: popIn 0.4s ease; }
 .game-over b { font-size: 1.6rem; color: var(--pink-soft); }
 .game-over span { color: var(--muted); font-size: 0.85rem; }
+
+/* ── god-mode cursor orb ── */
+#glow { position: fixed; width: 320px; height: 320px; border-radius: 50%; pointer-events: none; z-index: 0;
+  background: radial-gradient(circle, rgba(255,45,85,0.13), rgba(199,125,255,0.06) 45%, transparent 65%);
+  transform: translate(-50%, -50%); opacity: 0; transition: opacity 0.4s; }
+.weather-row { display: flex; align-items: center; gap: 14px; padding: 10px 0; }
+.weather-row + .weather-row { border-top: 1px dashed rgba(255,140,180,0.2); }
+.w-city { display: block; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
