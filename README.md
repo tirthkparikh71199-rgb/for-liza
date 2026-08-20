@@ -2,7 +2,7 @@
 
 A love-website + daily companion for my wife — hosted free on GitHub Pages.
 
-**Live:** https://tirthkparikh71199-rgb.github.io/for-fats/
+**Live:** https://tirthkparikh71199-rgb.github.io/for-liza/
 **Login:** husband's name + boop answer 🔒
 
 ## What's inside
@@ -28,13 +28,13 @@ A love-website + daily companion for my wife — hosted free on GitHub Pages.
 
 ## 🔄 Go-live: switch emails from test inbox to HER
 ```bash
-printf 'lizabvora@gmail.com' | gh secret set WIFE_EMAIL -R tirthkparikh71199-rgb/for-fats
+printf 'lizabvora@gmail.com' | gh secret set WIFE_EMAIL -R tirthkparikh71199-rgb/for-liza
 ```
 
 ## Test emails manually
 ```bash
-gh workflow run water.yml -R tirthkparikh71199-rgb/for-fats
-gh workflow run daily.yml -R tirthkparikh71199-rgb/for-fats
+gh workflow run water.yml -R tirthkparikh71199-rgb/for-liza
+gh workflow run daily.yml -R tirthkparikh71199-rgb/for-liza
 ```
 
 ## Optional: Firebase sync (cross-device notes/lists/photos)

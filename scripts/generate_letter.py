@@ -25,14 +25,14 @@ def groq(prompt, key):
             "max_completion_tokens": 450,
             "messages": [{"role": "user", "content": prompt}],
         }).encode(),
-        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json", "User-Agent": "Mozilla/5.0 (forfats-love/1.0)"},
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json", "User-Agent": "Mozilla/5.0 (forliza-love/1.0)"},
     )
     with urllib.request.urlopen(req, timeout=60) as r:
         return json.load(r)["choices"][0]["message"]["content"]
 
 def pollinations(prompt):
     url = "https://text.pollinations.ai/" + urllib.parse.quote(prompt)
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (forfats-love/1.0)"})
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (forliza-love/1.0)"})
     with urllib.request.urlopen(req, timeout=60) as r:
         return r.read().decode()
 

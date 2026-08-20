@@ -16,12 +16,12 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
     $("lockScreen").classList.add("open");
     confetti(innerWidth / 2, innerHeight / 2, 26);
   };
-  if (localStorage.getItem("fats_unlocked") === "1" || location.search.includes("preview")) { open(); }
+  if (localStorage.getItem("liza_unlocked") === "1" || location.search.includes("preview")) { open(); }
   const tryUnlock = () => {
     const n = $("lockName").value.trim().toLowerCase();
     const p = $("lockPass").value.trim().toLowerCase();
     if (n === "bubie" && p === "paap") {
-      localStorage.setItem("fats_unlocked", "1");
+      localStorage.setItem("liza_unlocked", "1");
       $("lockMsg").textContent = "welcome home, wifey 💕";
       open();
     } else {
@@ -377,7 +377,7 @@ $("spotifyFrame").src = CONFIG.spotifyEmbed;
 /* ─────────── 📸 PHOTO MEMORIES (IndexedDB) ─────────── */
 const idb = {
   open: () => new Promise((res, rej) => {
-    const r = indexedDB.open("forFats", 1);
+    const r = indexedDB.open("forLiza", 1);
     r.onupgradeneeded = () => r.result.createObjectStore("photos", { keyPath: "id", autoIncrement: true });
     r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   }),
@@ -480,16 +480,16 @@ const QUESTIONS = ["What's your favorite memory of us so far?", "One thing I do 
 $("qodText").textContent = "“" + QUESTIONS[dayOfYear() % QUESTIONS.length] + "”";
 (async function qod() {
   const a = await fetchDoc("answers", todayKey());
-  if (a) { if (a.fats) $("ansLiza").value = a.fats; if (a.tirth) $("ansTirth").value = a.tirth; renderAnswers(a); }
+  if (a) { if (a.liza) $("ansLiza").value = a.liza; if (a.tirth) $("ansTirth").value = a.tirth; renderAnswers(a); }
 })();
 $("ansSave").addEventListener("click", async (e) => {
-  const a = { fats: $("ansLiza").value.trim(), tirth: $("ansTirth").value.trim(), ts: Date.now() };
+  const a = { liza: $("ansLiza").value.trim(), tirth: $("ansTirth").value.trim(), ts: Date.now() };
   await store("answers", todayKey(), a);
   renderAnswers(a);
   confetti(e.clientX, e.clientY, 10);
 });
 function renderAnswers(a) {
-  $("ansShow").innerHTML = (a.fats ? `<div class="ans-bubble"><b>🩷 Liza:</b> ${esc(a.fats)}</div>` : "") + (a.tirth ? `<div class="ans-bubble"><b>💙 Tirth:</b> ${esc(a.tirth)}</div>` : "");
+  $("ansShow").innerHTML = (a.liza ? `<div class="ans-bubble"><b>🩷 Liza:</b> ${esc(a.liza)}</div>` : "") + (a.tirth ? `<div class="ans-bubble"><b>💙 Tirth:</b> ${esc(a.tirth)}</div>` : "");
 }
 
 /* ─────────── 📝 LISTS (shared + wishlist) ─────────── */
