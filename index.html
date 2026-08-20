@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=202608210018" />
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
@@ -176,10 +176,10 @@
       <p class="muted tiny">period · ovulation · fertile window — private, and synced on both your phones 🔒</p>
 
       <div class="cyc-top">
-        <div class="cyc-ring">
-          <svg viewBox="0 0 120 120">
-            <circle class="cyc-track" cx="60" cy="60" r="52" />
-            <circle class="cyc-prog" id="cycProg" cx="60" cy="60" r="52" />
+        <div class="cyc-ring" style="width:132px;height:132px;flex:0 0 132px">
+          <svg viewBox="0 0 120 120" width="132" height="132" style="width:132px;height:132px">
+            <circle class="cyc-track" cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="9" />
+            <circle class="cyc-prog" id="cycProg" cx="60" cy="60" r="52" fill="none" stroke="#ff2d78" stroke-width="9" stroke-linecap="round" />
           </svg>
           <div class="cyc-ring-in">
             <span id="cycDayNum">–</span>
@@ -477,7 +477,7 @@
     </div>
   </div>
 
-  <script src="config.js"></script>
-  <script src="script.js"></script>
+  <script src="config.js?v=202608210018"></script>
+  <script src="script.js?v=202608210018"></script>
 </body>
 </html>
