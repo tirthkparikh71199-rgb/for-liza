@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#ff4d8d" />
+  <meta name="theme-color" content="#050208" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>For Liza ❤️</title>
+  <title>LIZU3000 ❤️</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❤️</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,20 +17,22 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 </head>
 <body>
-  <div id="loader"><div class="loader-heart">❤️</div><p class="script-font">made with love, for Liza…</p></div>
+  <div id="loader"><div class="loader-heart">❤️</div><p class="loader-brand">LIZU<span>3000</span></p><p class="script-font">booting her love-machine…</p></div>
   <canvas id="loveCanvas"></canvas>
   <div class="bg-blobs"><span></span><span></span><span></span></div>
 
   <nav>
-    <span class="brand script-font">Liza ❤️ Tirth</span>
+    <span class="brand neon-brand">LIZU<span class="brand-heart">❤️</span>3000</span>
     <div class="nav-links">
       <a href="#letter">💌 Letter</a>
       <a href="#mood">😊 Mood</a>
+      <a href="#cycle">🌸 Cycle</a>
       <a href="#photos">📸 Photos</a>
       <a href="#notes">❤️ Notes</a>
       <a href="#travel">✈️ Travel</a>
+      <a href="#order">🛎️ Order</a>
       <a href="#play">🎮 Play</a>
-      <a href="#bot">💕 Love AI</a>
+      <a href="#bot">🤖 LIZU-3000</a>
     </div>
   </nav>
 
@@ -58,6 +60,13 @@
     </div>
   </header>
 
+  <div class="ecg">
+    <svg viewBox="0 0 600 60" preserveAspectRatio="none">
+      <path class="ecg-line" d="M0,30 L90,30 L105,30 L118,10 L131,48 L144,30 L210,30 L225,30 L238,10 L251,48 L264,30 L330,30 L345,30 L358,10 L371,48 L384,30 L450,30 L465,30 L478,10 L491,48 L504,30 L600,30" />
+    </svg>
+    <span class="ecg-heart">❤️</span>
+  </div>
+
   <main class="bento">
 
     <!-- AI DAILY LETTER -->
@@ -78,6 +87,15 @@
         <p class="letter-poem" id="letterPoem"></p>
         <p class="sig">— forever, your Tirth ❤️</p>
       </div>
+    </section>
+
+    <!-- OUR STORY TIMELINE -->
+    <section id="story" class="card wide reveal">
+      <div class="card-head">
+        <h2>📖 Our Story</h2>
+        <span class="chip">scroll slowly 💕</span>
+      </div>
+      <div class="timeline" id="timeline"></div>
     </section>
 
     <!-- DUBAI WEATHER + WORLD FX -->
@@ -105,6 +123,13 @@
       <div class="card-head"><h2>🔮 Your Stars Today</h2><span class="chip ai-chip">♑ Capricorn</span></div>
       <p id="horoText" class="horo-text script-font">reading your stars…</p>
       <small class="muted tiny">15 jan baby — best star sign, obviously (he may be biased)</small>
+    </section>
+
+    <!-- WEDDING SKY -->
+    <section id="sky" class="card reveal">
+      <div class="card-head"><h2>🌌 Our Wedding Sky</h2><span class="chip">23.02.2025</span></div>
+      <canvas id="skyCanvas" class="sky-canvas"></canvas>
+      <p class="muted tiny" style="text-align:center">the stars arranged themselves into a heart that night — obviously ✨</p>
     </section>
 
     <!-- MOOD DIARY -->
@@ -140,6 +165,68 @@
         <button class="big-btn water-btn" id="drinkBtn">💧 drank a glass</button>
         <button class="big-btn ghost" id="notifBtn">🔔 ping me here too</button>
       </div>
+    </section>
+
+    <!-- CYCLE TRACKER -->
+    <section id="cycle" class="card wide reveal">
+      <div class="card-head">
+        <h2>🌸 Cycle Tracker</h2>
+        <span class="chip" id="cyclePhaseChip">…</span>
+      </div>
+      <p class="muted tiny">period · ovulation · fertile window — private, and synced on both your phones 🔒</p>
+
+      <div class="cyc-top">
+        <div class="cyc-ring">
+          <svg viewBox="0 0 120 120">
+            <circle class="cyc-track" cx="60" cy="60" r="52" />
+            <circle class="cyc-prog" id="cycProg" cx="60" cy="60" r="52" />
+          </svg>
+          <div class="cyc-ring-in">
+            <span id="cycDayNum">–</span>
+            <small id="cycDayOf">day of cycle</small>
+          </div>
+        </div>
+        <div class="cyc-facts">
+          <div class="cyc-fact"><span class="cf-emoji">🩸</span><div><b id="cycNextPeriod">–</b><small>next period</small></div></div>
+          <div class="cyc-fact"><span class="cf-emoji">🥚</span><div><b id="cycOvu">–</b><small>ovulation day</small></div></div>
+          <div class="cyc-fact"><span class="cf-emoji">💞</span><div><b id="cycFertile">–</b><small>fertile window</small></div></div>
+          <div class="cyc-fact"><span class="cf-emoji">🌙</span><div><b id="cycPms">–</b><small>PMS window</small></div></div>
+        </div>
+      </div>
+
+      <p id="cycMsg" class="cyc-msg script-font">tell me when your last period started 💕</p>
+      <div class="cyc-calendar" id="cycCal"></div>
+      <div class="cyc-legend">
+        <span><i class="lg period"></i>period</span>
+        <span><i class="lg fertile"></i>fertile</span>
+        <span><i class="lg ovu"></i>ovulation</span>
+        <span><i class="lg pms"></i>PMS</span>
+        <span><i class="lg today"></i>today</span>
+      </div>
+
+      <div class="cyc-form">
+        <label class="cyc-lab">last period started<input type="date" id="cycLast" class="text-input slim" /></label>
+        <label class="cyc-lab">cycle length<input type="number" id="cycLen" class="text-input slim" min="20" max="45" value="28" /></label>
+        <label class="cyc-lab">period length<input type="number" id="cycPer" class="text-input slim" min="2" max="10" value="5" /></label>
+        <button class="big-btn" id="cycSave">save 💾</button>
+      </div>
+      <div class="hero-btns">
+        <button class="big-btn water-btn" id="cycStarted">🩸 it started today</button>
+        <button class="big-btn ghost" id="cycRemind">🔔 remind me 2 days before</button>
+      </div>
+
+      <p class="muted tiny cyc-log-lab">how do you feel today?</p>
+      <div class="quick-chips" id="cycSymptoms">
+        <button class="qchip" data-s="🤕 cramps">🤕 cramps</button>
+        <button class="qchip" data-s="😴 tired">😴 tired</button>
+        <button class="qchip" data-s="🍫 craving">🍫 craving</button>
+        <button class="qchip" data-s="😊 great">😊 great</button>
+        <button class="qchip" data-s="😢 emotional">😢 emotional</button>
+        <button class="qchip" data-s="🤢 nausea">🤢 nausea</button>
+        <button class="qchip" data-s="🤯 headache">🤯 headache</button>
+        <button class="qchip" data-s="🔥 hot">🔥 hot</button>
+      </div>
+      <div id="cycLogList" class="cyc-log-list"></div>
     </section>
 
     <!-- MUSIC -->
@@ -238,6 +325,46 @@
       <p class="muted tiny" id="pingStatus"></p>
     </section>
 
+    <!-- ORDER TIRTH -->
+    <section id="order" class="card wide reveal">
+      <div class="card-head">
+        <h2>🛎️ Order your husband</h2>
+        <span class="chip chip-live">🟢 always on duty</span>
+      </div>
+      <p class="muted tiny">pick what you need him as, tell him what you want, and he gets the order in his inbox 💌</p>
+      <div class="role-grid" id="roleGrid">
+        <button class="role-btn on" data-role="🚗 DRIVER"><span>🚗</span><small>driver</small></button>
+        <button class="role-btn" data-role="🤵 BUTLER"><span>🤵</span><small>butler</small></button>
+        <button class="role-btn" data-role="🛍️ SHOPPER"><span>🛍️</span><small>shopper</small></button>
+        <button class="role-btn" data-role="😘 LOVER"><span>😘</span><small>lover</small></button>
+        <button class="role-btn" data-role="👨‍🍳 CHEF"><span>👨‍🍳</span><small>chef</small></button>
+        <button class="role-btn" data-role="💆 MASSEUSE"><span>💆</span><small>massage</small></button>
+      </div>
+      <div class="quick-chips" id="orderQuick">
+        <button class="qchip" data-o="pick me up 🚗">pick me up</button>
+        <button class="qchip" data-o="bring chocolate 🍫">bring chocolate</button>
+        <button class="qchip" data-o="get me coffee ☕">coffee</button>
+        <button class="qchip" data-o="ice cream please 🍦">ice cream</button>
+        <button class="qchip" data-o="foot massage tonight 💆">foot massage</button>
+        <button class="qchip" data-o="take me shopping 🛍️">take me shopping</button>
+        <button class="qchip" data-o="cuddles, right now 🥺">cuddles now</button>
+        <button class="qchip" data-o="order dinner for us 🍽️">order dinner</button>
+      </div>
+      <div class="note-form">
+        <input id="orderText" class="text-input" placeholder="what do you need, my queen?…" maxlength="220" />
+        <select id="orderWhen" class="text-input slim">
+          <option value="RIGHT NOW ⚡">right now ⚡</option>
+          <option value="in an hour">in an hour</option>
+          <option value="tonight">tonight</option>
+          <option value="tomorrow">tomorrow</option>
+          <option value="whenever you can 💕">whenever 💕</option>
+        </select>
+        <button class="big-btn" id="orderSend">place order 🛎️</button>
+      </div>
+      <p class="muted tiny" id="orderStatus"></p>
+      <div id="orderList" class="cyc-log-list"></div>
+    </section>
+
     <!-- LISTS -->
     <section id="list" class="card reveal">
       <div class="card-head">
@@ -305,10 +432,11 @@
     <!-- LOVE AI -->
     <section id="bot" class="card wide reveal ai-glow">
       <div class="card-head">
-        <h2>💕 Love AI</h2>
+        <h2>🤖 LIZU-3000</h2>
+        <span class="chip chip-live">🤖 LIZU-3000 online</span>
         <span class="chip" id="memChip">🧠 0 memories</span>
       </div>
-      <p class="muted tiny">missing him? hungry? planning a trip? Love AI is awake all day, just for you · tell it <b>"remember that…"</b> and it never forgets 🧠</p>
+      <p class="muted tiny">your own love-robot, built by Tirth · missing him? hungry? planning a trip? LIZU-3000 is awake all day, just for you · tell it <b>"remember that…"</b> and it never forgets 🧠</p>
       <div id="chatBox" class="chat-box"></div>
       <div class="quick-chips">
         <button class="qchip" data-q="compliment me 🥺">compliment me 🥺</button>
@@ -322,7 +450,7 @@
         <button class="qchip" data-q="i miss you">i miss you</button>
       </div>
       <div class="note-form">
-        <input id="chatInput" class="text-input" placeholder="ask Love AI anything…" maxlength="300" />
+        <input id="chatInput" class="text-input" placeholder="ask LIZU-3000 anything…" maxlength="300" />
         <button class="big-btn" id="chatSend">send 💬</button>
       </div>
     </section>

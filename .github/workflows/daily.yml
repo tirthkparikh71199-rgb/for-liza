@@ -1,7 +1,7 @@
 name: 💌 Daily AI Love Letter
 on:
   schedule:
-    - cron: "0 6 * * *"   # 10:00 AM Gulf time every day
+    - cron: "30 4 * * *"   # 8:30 AM Gulf time — letter is waiting when she wakes up
   workflow_dispatch:
 
 permissions:
@@ -31,4 +31,6 @@ jobs:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           WIFE_EMAIL: ${{ secrets.WIFE_EMAIL }}
+          WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
+          WHATSAPP_APIKEY: ${{ secrets.WHATSAPP_APIKEY }}
         run: python scripts/send_email.py daily

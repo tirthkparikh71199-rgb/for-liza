@@ -36,47 +36,87 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
   $("lockName").addEventListener("keydown", (e) => e.key === "Enter" && $("lockPass").focus());
 })();
 
-/* ─────────── 🔥 STORAGE LAYER (Firestore if configured, else local) ─────────── */
+/* ─────────── ☁️ STORAGE LAYER: Firebase if configured → else live cloud KV (syncs both phones) ─────────── */
 let db = null;
 const FS_OK = !CONFIG.firebase.apiKey.startsWith("YOUR");
 if (FS_OK && window.firebase) {
   try { firebase.initializeApp(CONFIG.firebase); db = firebase.firestore(); } catch (e) { db = null; }
+}
+const KV = "https://textdb.dev/api/data/";
+const kvKey = (key) => KV + encodeURIComponent(CONFIG.kvPrefix + "-" + String(key).replace(/[^A-Za-z0-9_-]/g, "-"));
+async function kvGet(key) {
+  try {
+    const r = await fetch(kvKey(key), { cache: "no-store" });
+    if (!r.ok) return null;
+    const t = (await r.text()).trim();
+    if (!t) return null;                       // key never written yet
+    const o = JSON.parse(t);
+    return o && typeof o === "object" && "v" in o ? o.v : o;
+  } catch (e) { return null; }
+}
+async function kvSet(key, val) {
+  try {
+    const r = await fetch(kvKey(key), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ v: val }) });
+    return r.ok;
+  } catch (e) { return false; }
 }
 const localArr = (k) => JSON.parse(localStorage.getItem("fs_" + k) || "[]");
 const saveLocalArr = (k, v) => localStorage.setItem("fs_" + k, JSON.stringify(v));
 
 async function store(coll, id, data) {
   if (db) { try { await db.collection(coll).doc(id).set(data, { merge: true }); return; } catch (e) {} }
-  localStorage.setItem(`fs_${coll}:${id}`, JSON.stringify(data));
+  if (!(await kvSet(`d/${coll}/${id}`, data))) localStorage.setItem(`fs_${coll}:${id}`, JSON.stringify(data));
 }
 async function fetchDoc(coll, id) {
   if (db) { try { const s = await db.collection(coll).doc(id).get(); return s.exists ? s.data() : null; } catch (e) {} }
-  const v = localStorage.getItem(`fs_${coll}:${id}`);
-  return v ? JSON.parse(v) : null;
+  const v = await kvGet(`d/${coll}/${id}`);
+  if (v) return v;
+  const l = localStorage.getItem(`fs_${coll}:${id}`);
+  return l ? JSON.parse(l) : null;
 }
 async function pushItem(coll, data) {
   data.ts = Date.now();
   if (db) { try { await db.collection(coll).add(data); return; } catch (e) {} }
-  const a = localArr(coll); a.unshift(data); saveLocalArr(coll, a.slice(0, 200));
+  const a = (await kvGet("c/" + coll)) || localArr(coll);
+  a.unshift(data);
+  await kvSet("c/" + coll, a.slice(0, 200));
+  saveLocalArr(coll, a.slice(0, 200));
   renderAllLists();
 }
 async function updateItem(coll, ts, patch) {
   if (db) { try { const q = await db.collection(coll).where("ts", "==", ts).get(); q.forEach((d) => d.ref.update(patch)); return; } catch (e) {} }
-  const a = localArr(coll); const i = a.findIndex((x) => x.ts === ts);
-  if (i > -1) { Object.assign(a[i], patch); saveLocalArr(coll, a); }
+  const a = (await kvGet("c/" + coll)) || localArr(coll);
+  const i = a.findIndex((x) => x.ts === ts);
+  if (i > -1) { Object.assign(a[i], patch); await kvSet("c/" + coll, a); saveLocalArr(coll, a); }
 }
 async function deleteItem(coll, ts) {
   if (db) { try { const q = await db.collection(coll).where("ts", "==", ts).get(); q.forEach((d) => d.ref.delete()); return; } catch (e) {} }
-  saveLocalArr(coll, localArr(coll).filter((x) => x.ts !== ts)); renderAllLists();
+  const a = ((await kvGet("c/" + coll)) || localArr(coll)).filter((x) => x.ts !== ts);
+  await kvSet("c/" + coll, a); saveLocalArr(coll, a);
+  renderAllLists();
 }
 const watchers = {};
 function watch(coll, cb) {
   watchers[coll] = cb;
   if (db) {
     try { db.collection(coll).orderBy("ts", "desc").limit(60).onSnapshot((s) => cb(s.docs.map((d) => d.data())), () => cb(localArr(coll))); } catch (e) { cb(localArr(coll)); }
-  } else cb(localArr(coll));
+    return;
+  }
+  let last = "";
+  const load = async () => {
+    const v = (await kvGet("c/" + coll)) || localArr(coll);
+    const s = JSON.stringify(v);
+    if (s !== last) { last = s; cb(v); }
+  };
+  load();
+  setInterval(load, 12000); // live-ish sync every 12s between phones
 }
-function renderAllLists() { Object.keys(watchers).forEach((k) => watchers[k](localArr(k))); }
+async function renderAllLists() {
+  for (const k of Object.keys(watchers)) {
+    const v = (await kvGet("c/" + k)) || localArr(k);
+    watchers[k](v);
+  }
+}
 
 /* ─────────── ✨ FX: confetti, rain, cursor trail, floaters ─────────── */
 function confetti(x, y, n = 14) {
@@ -631,7 +671,7 @@ $("chatSend").addEventListener("click", sendChat);
 $("chatInput").addEventListener("keydown", (e) => e.key === "Enter" && sendChat());
 document.querySelectorAll("[data-q]").forEach((b) => b.addEventListener("click", () => { $("chatInput").value = b.dataset.q; sendChat(); }));
 chatHist.slice(-14).forEach((m) => addMsg(m.content, m.role === "user" ? "me" : "bot"));
-if (!chatHist.length) addMsg(`Hi Liza 💕 I'm Love AI — Tirth built me so you're never bored, hungry, lost, or unloved. Ask me anything: compliments, dinner plans in Dubai or Ahmedabad, trip planning for ANY country… and tell me "remember that I love roses" — I never forget 🧠`, "bot");
+if (!chatHist.length) addMsg(`Hi Liza 💕 I'm LIZU-3000 — your personal love robot. Tirth built me so you're never bored, hungry, lost, or unloved. Ask me anything: compliments, dinner plans in Dubai or Ahmedabad, trip planning for ANY country… and tell me "remember that I love roses" — I never forget 🧠`, "bot");
 updateMemChip();
 
 /* ─────────── 🤗 HUG ─────────── */
@@ -888,5 +928,374 @@ function gameOver(box, score, best, label) {
         gameOver(field, score, best, score > 16 ? "balloon queen 👑" : score > 9 ? "popping pro 🎈" : "every pop was a kiss 😘");
       }
     }, 1000);
+  });
+})();
+
+/* ═══════════ 📖 OUR STORY TIMELINE ═══════════ */
+(function story() {
+  const tl = $("timeline"); if (!tl || !CONFIG.LOVE_STORY) return;
+  tl.innerHTML = CONFIG.LOVE_STORY.map((m) => `
+    <div class="tl-item">
+      <div class="tl-card">
+        <span class="tl-date">${esc(m.date)}</span>
+        <p class="tl-title"><span class="tl-emoji">${m.emoji}</span>${esc(m.title)}</p>
+        <p class="tl-text">${esc(m.text)}</p>
+      </div>
+    </div>`).join("");
+  const tio = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && e.target.classList.add("in")), { threshold: 0.15 });
+  tl.querySelectorAll(".tl-item").forEach((el) => tio.observe(el));
+})();
+
+/* ═══════════ 🌌 WEDDING SKY (heart constellation, seeded by 23.02.2025) ═══════════ */
+(function sky() {
+  const cv = $("skyCanvas"); if (!cv) return;
+  const ctx = cv.getContext("2d");
+  const fit = () => { cv.width = cv.clientWidth * 2; cv.height = cv.clientHeight * 2; };
+  fit(); addEventListener("resize", fit);
+  let seed = 23022025;
+  const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  const stars = Array.from({ length: 130 }, () => ({ x: rnd(), y: rnd(), r: rnd() * 1.7 + 0.4, tw: rnd() * 6.28 }));
+  const pts = [];
+  for (let t = 0; t <= 6.3; t += 0.3) {
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    pts.push({ x: 0.5 + x / 48, y: 0.47 - y / 48 });
+  }
+  (function loop() {
+    const t = Date.now() / 1000;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    stars.forEach((s) => {
+      ctx.globalAlpha = 0.2 + Math.abs(Math.sin(t + s.tw)) * 0.65;
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.arc(s.x * cv.width, s.y * cv.height, s.r, 0, 6.28); ctx.fill();
+    });
+    const n = Math.min(Math.floor(((t % 7) / 3) * pts.length), pts.length);
+    ctx.strokeStyle = "#ff5c8a"; ctx.lineWidth = 1.4; ctx.shadowColor = "#ff2d55"; ctx.shadowBlur = 10;
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    pts.slice(0, n + 1).forEach((p, i) => (i ? ctx.lineTo(p.x * cv.width, p.y * cv.height) : ctx.moveTo(p.x * cv.width, p.y * cv.height)));
+    ctx.stroke();
+    pts.slice(0, n + 1).forEach((p, i) => {
+      ctx.globalAlpha = 0.7 + Math.sin(t * 2 + i) * 0.3;
+      ctx.fillStyle = "#ff85a2";
+      ctx.beginPath(); ctx.arc(p.x * cv.width, p.y * cv.height, 3.2, 0, 6.28); ctx.fill();
+    });
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ═══════════ ✨ SCRAMBLE-DECODE HERO TITLE ═══════════ */
+(function scramble() {
+  const el = document.querySelector(".hero h1"); if (!el) return;
+  const final = el.textContent;
+  const chars = "❤✨·*abcdefghijklmnopqrstuvwxyz";
+  let frame = 0;
+  const iv = setInterval(() => {
+    frame++;
+    el.textContent = final.split("").map((c, i) => (frame / 3 > i ? c : chars[Math.floor(Math.random() * chars.length)])).join("");
+    if (frame / 3 >= final.length) { clearInterval(iv); el.textContent = final; }
+  }, 55);
+})();
+
+/* ═══════════ 🌸 CYCLE TRACKER (period · ovulation · fertile window) ═══════════ */
+(function cycle() {
+  if (!$("cycLast")) return;
+  const DAY = 864e5;
+  const key = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const parse = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const addDays = (d, n) => new Date(d.getTime() + n * DAY);
+  const midnight = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const pretty = (d) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  const daysBetween = (a, b) => Math.round((midnight(b) - midnight(a)) / DAY);
+
+  let S = { lastStart: "", cycleLen: 28, periodLen: 5, history: [] };
+
+  /* which phase a given date falls in, relative to the last period start */
+  function phaseOf(date) {
+    if (!S.lastStart) return null;
+    const start = parse(S.lastStart);
+    let day = daysBetween(start, date) % S.cycleLen;   // 0-indexed day of cycle
+    if (day < 0) day += S.cycleLen;
+    const ovu = S.cycleLen - 14;                        // luteal phase is the stable ~14 days
+    if (day < S.periodLen) return { day, name: "period", label: "🩸 period days" };
+    if (day === ovu) return { day, name: "ovu", label: "🥚 ovulation day" };
+    if (day >= ovu - 5 && day <= ovu + 1) return { day, name: "fertile", label: "💞 fertile window" };
+    if (day >= S.cycleLen - 4) return { day, name: "pms", label: "🌙 PMS window" };
+    return { day, name: "normal", label: "✨ all good days" };
+  }
+
+  const MSG = {
+    period: "rest, hot water bottle, chocolate — and tell him, he'll fuss over you 💕",
+    fertile: "fertile window, jaan 💞 (nature's little heads-up)",
+    ovu: "ovulation day 🥚 — energy's usually highest today, go be unstoppable ✨",
+    pms: "PMS window 🌙 — be extra gentle with yourself. cravings are 100% allowed 🍫",
+    normal: "your good-energy days ✨ perfect time for plans and mischief 💕",
+  };
+
+  function render() {
+    const today = midnight(new Date());
+    const ph = phaseOf(today);
+    if (!S.lastStart || !ph) {
+      $("cyclePhaseChip").textContent = "set it up 👇";
+      $("cycMsg").textContent = "tell me when your last period started 💕";
+      return;
+    }
+    const start = parse(S.lastStart);
+    /* roll forward to the cycle she is actually in right now */
+    let cycStart = start;
+    while (daysBetween(cycStart, today) >= S.cycleLen) cycStart = addDays(cycStart, S.cycleLen);
+    const nextPeriod = addDays(cycStart, S.cycleLen);
+    const ovuDate = addDays(cycStart, S.cycleLen - 14);
+    const fertStart = addDays(ovuDate, -5), fertEnd = addDays(ovuDate, 1);
+    const pmsStart = addDays(nextPeriod, -4);
+    const dayNum = daysBetween(cycStart, today) + 1;
+    const toPeriod = daysBetween(today, nextPeriod);
+
+    $("cycDayNum").textContent = dayNum;
+    $("cycDayOf").textContent = `of ${S.cycleLen} days`;
+    $("cyclePhaseChip").textContent = ph.label;
+    $("cycNextPeriod").textContent = `${pretty(nextPeriod)} · ${toPeriod === 0 ? "today" : "in " + toPeriod + "d"}`;
+    $("cycOvu").textContent = pretty(ovuDate);
+    $("cycFertile").textContent = `${pretty(fertStart)} – ${pretty(fertEnd)}`;
+    $("cycPms").textContent = `${pretty(pmsStart)} – ${pretty(addDays(nextPeriod, -1))}`;
+    $("cycMsg").textContent = MSG[ph.name] || "";
+
+    const circ = 2 * Math.PI * 52;
+    const prog = $("cycProg");
+    prog.style.strokeDasharray = circ;
+    prog.style.strokeDashoffset = circ * (1 - dayNum / S.cycleLen);
+
+    /* 35-day forecast strip */
+    $("cycCal").innerHTML = Array.from({ length: 35 }, (_, i) => {
+      const d = addDays(today, i - 4);
+      const p = phaseOf(d);
+      const isToday = daysBetween(today, d) === 0;
+      return `<div class="cyc-day ${p ? p.name : ""} ${isToday ? "today" : ""}" title="${pretty(d)}">
+        <small>${d.toLocaleDateString("en-GB", { weekday: "narrow" })}</small><b>${d.getDate()}</b></div>`;
+    }).join("");
+  }
+
+  async function save(patch) {
+    Object.assign(S, patch);
+    await store("cycle", "settings", S);
+    render();
+  }
+
+  $("cycSave").addEventListener("click", async (e) => {
+    const last = $("cycLast").value;
+    if (!last) { $("cycMsg").textContent = "pick the date your last period started first 💕"; return; }
+    const hist = Array.from(new Set([...(S.history || []), last])).sort().slice(-24);
+    await save({ lastStart: last, cycleLen: +$("cycLen").value || 28, periodLen: +$("cycPer").value || 5, history: hist });
+    confetti(e.clientX, e.clientY, 10);
+    $("cycMsg").textContent = "saved 💾 he's got you covered, jaan";
+  });
+
+  $("cycStarted").addEventListener("click", async (e) => {
+    const t = key(new Date());
+    const hist = Array.from(new Set([...(S.history || []), t])).sort().slice(-24);
+    /* learn her real average cycle length from her own history */
+    let len = S.cycleLen;
+    if (hist.length >= 2) {
+      const gaps = hist.slice(1).map((d, i) => daysBetween(parse(hist[i]), parse(d))).filter((g) => g >= 20 && g <= 45);
+      if (gaps.length) len = Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length);
+    }
+    $("cycLast").value = t; $("cycLen").value = len;
+    await save({ lastStart: t, cycleLen: len, history: hist });
+    confetti(e.clientX, e.clientY, 12);
+    $("cycMsg").textContent = hist.length >= 2
+      ? `logged 🩸 your average cycle is ${len} days — predictions updated`
+      : "logged 🩸 rest up, my love — I'll track the rest 💕";
+  });
+
+  $("cycRemind").addEventListener("click", async () => {
+    if (!("Notification" in window)) { alert("this browser can't do notifications, my love"); return; }
+    const p = await Notification.requestPermission();
+    localStorage.setItem("cyc_remind", p === "granted" ? "1" : "0");
+    $("cycRemind").textContent = p === "granted" ? "🔔 reminders on!" : "🔕 blocked by browser";
+  });
+
+  /* daily check: nudge 2 days before, and on the day */
+  setInterval(() => {
+    if (localStorage.getItem("cyc_remind") !== "1" || Notification.permission !== "granted" || !S.lastStart) return;
+    const t = key(new Date());
+    if (localStorage.getItem("cyc_notified") === t) return;
+    const today = midnight(new Date());
+    let cycStart = parse(S.lastStart);
+    while (daysBetween(cycStart, today) >= S.cycleLen) cycStart = addDays(cycStart, S.cycleLen);
+    const left = daysBetween(today, addDays(cycStart, S.cycleLen));
+    if (left === 2 || left === 0) {
+      new Notification("🌸 heads up, jaan", { body: left === 0 ? "your period is due today — pack the essentials 💕" : "your period is due in 2 days 💕" });
+      localStorage.setItem("cyc_notified", t);
+    }
+  }, 36e5);
+
+  /* symptom log */
+  $("cycSymptoms").addEventListener("click", (e) => {
+    const b = e.target.closest(".qchip"); if (!b) return;
+    pushItem("cycle_log", { date: key(new Date()), symptom: b.dataset.s });
+    confetti(e.clientX, e.clientY, 6);
+  });
+  watch("cycle_log", (items) => {
+    const list = (items || []).slice(0, 14);
+    $("cycLogList").innerHTML = list.length
+      ? list.map((i) => `<span class="cyc-log-item">${esc(i.symptom)} <small>${esc(i.date || "")}</small></span>`).join("")
+      : `<span class="muted tiny">no logs yet — tap a feeling above 💕</span>`;
+  });
+
+  (async () => {
+    const saved = await fetchDoc("cycle", "settings");
+    if (saved) {
+      S = Object.assign(S, saved);
+      $("cycLast").value = S.lastStart || "";
+      $("cycLen").value = S.cycleLen; $("cycPer").value = S.periodLen;
+    }
+    render();
+  })();
+})();
+
+/* ═══════════ 📱 MULTI-PAGE APP SHELL (bottom tabs + hash router) ═══════════ */
+(function router() {
+  const main = document.querySelector("main.bento");
+  if (!main) return;
+
+  const PAGES = [
+    { id: "home",  icon: "🏠", label: "Home",   sections: ["letter", "story", "sky"], hero: true },
+    { id: "her",   icon: "🌸", label: "You",    sections: ["cycle", "water", "mood", "horo", "weather"] },
+    { id: "us",    icon: "💕", label: "Us",     sections: ["order", "notes", "photos", "question", "list", "ping"] },
+    { id: "dream", icon: "✈️", label: "Dreams", sections: ["travel", "movies", "music", "food"] },
+    { id: "lizu",  icon: "🤖", label: "LIZU",   sections: ["bot", "play"] },
+  ];
+  const hero = document.querySelector("header.hero");
+  const sectionPage = {};
+
+  /* build one wrapper per page and move the sections into it */
+  PAGES.forEach((p) => {
+    const wrap = document.createElement("div");
+    wrap.className = "page bento-grid";
+    wrap.id = "page-" + p.id;
+    p.sections.forEach((sid) => {
+      const el = $(sid);
+      if (el) { wrap.appendChild(el); sectionPage[sid] = p.id; }
+    });
+    main.appendChild(wrap);
+  });
+  main.classList.add("paged");
+
+  /* bottom tab bar */
+  const bar = document.createElement("div");
+  bar.className = "tabbar";
+  bar.setAttribute("role", "navigation");
+  bar.innerHTML = PAGES.map((p) => `<button class="tab" data-page="${p.id}">
+      <span class="tab-ico">${p.icon}</span><span class="tab-lab">${p.label}</span></button>`).join("");
+  document.body.appendChild(bar);
+
+  let current = "";
+  function go(id, scrollTo) {
+    const page = PAGES.find((p) => p.id === id) || PAGES[0];
+    if (page.id !== current) {
+      current = page.id;
+      PAGES.forEach((p) => $("page-" + p.id).classList.toggle("on", p.id === page.id));
+      if (hero) hero.classList.toggle("hidden-page", !page.hero);
+      bar.querySelectorAll(".tab").forEach((t) => t.classList.toggle("on", t.dataset.page === page.id));
+      history.replaceState(null, "", "#" + page.id);
+      /* sections that scrolled past while hidden never fire the observer — reveal them now */
+      requestAnimationFrame(() => $("page-" + page.id).querySelectorAll(".reveal").forEach((el, i) => {
+        setTimeout(() => el.classList.add("in"), 60 * i);
+      }));
+    }
+    if (scrollTo && $(scrollTo)) setTimeout(() => $(scrollTo).scrollIntoView({ behavior: "smooth", block: "start" }), 90);
+    else if (scrollTo !== false) window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  bar.addEventListener("click", (e) => {
+    const t = e.target.closest(".tab"); if (!t) return;
+    go(t.dataset.page);
+    if (navigator.vibrate) navigator.vibrate(8);
+  });
+
+  /* top nav links jump to the right page, then to the section */
+  document.querySelectorAll(".nav-links a").forEach((a) => {
+    a.addEventListener("click", (e) => {
+      const sid = a.getAttribute("href").slice(1);
+      const pid = sectionPage[sid];
+      if (!pid) return;
+      e.preventDefault();
+      go(pid, sid);
+    });
+  });
+  /* brand → home */
+  const brand = document.querySelector(".brand");
+  if (brand) { brand.style.cursor = "pointer"; brand.addEventListener("click", () => go("home")); }
+
+  /* swipe between pages (phone-first) */
+  let sx = 0, sy = 0, moved = false;
+  addEventListener("touchstart", (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; moved = false; }, { passive: true });
+  addEventListener("touchmove", () => { moved = true; }, { passive: true });
+  addEventListener("touchend", (e) => {
+    if (!moved || !e.changedTouches[0]) return;
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.7) return;
+    if (e.target.closest(".cyc-calendar, .quick-chips, .chat-box, .sticky-wall, input, textarea")) return;
+    const i = PAGES.findIndex((p) => p.id === current);
+    const next = PAGES[dx < 0 ? Math.min(i + 1, PAGES.length - 1) : Math.max(i - 1, 0)];
+    if (next && next.id !== current) go(next.id);
+  }, { passive: true });
+
+  const start = location.hash.replace("#", "");
+  go(PAGES.some((p) => p.id === start) ? start : sectionPage[start] || "home", sectionPage[start] ? start : false);
+})();
+
+
+/* ═══════════ 🛎️ ORDER YOUR HUSBAND (driver · butler · shopper · lover…) ═══════════ */
+(function orders() {
+  if (!$("orderSend")) return;
+  let role = "🚗 DRIVER";
+  $("roleGrid").addEventListener("click", (e) => {
+    const b = e.target.closest(".role-btn"); if (!b) return;
+    role = b.dataset.role;
+    $("roleGrid").querySelectorAll(".role-btn").forEach((x) => x.classList.toggle("on", x === b));
+    if (navigator.vibrate) navigator.vibrate(8);
+  });
+  $("orderQuick").addEventListener("click", (e) => {
+    const b = e.target.closest(".qchip"); if (!b) return;
+    $("orderText").value = b.dataset.o;
+    $("orderText").focus();
+  });
+
+  async function place(e) {
+    const what = $("orderText").value.trim();
+    if (!what) { $("orderStatus").textContent = "tell him what you want first, jaan 💕"; return; }
+    const when = $("orderWhen").value;
+    const stamp = new Date().toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+    $("orderStatus").textContent = "placing your order… 🛎️";
+    try {
+      await fetch("https://formsubmit.co/ajax/" + CONFIG.tirthEmail, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          _subject: `🛎️ NEW ORDER from Liza — ${role}`,
+          name: "Liza 👑",
+          message: `👑 Liza has placed an order.\n\nSERVICE: ${role}\nSHE WANTS: ${what}\nWHEN: ${when}\n\nplaced ${stamp}\n\n— get moving, husband 💕`,
+        }),
+      });
+      $("orderStatus").textContent = "order placed 🛎️ he's on it, my queen 👑";
+      pushItem("orders", { role, what, when, done: false });
+      $("orderText").value = "";
+      confetti(e.clientX || innerWidth / 2, e.clientY || innerHeight / 2, 12);
+      emojiRain(["🛎️", "💕", "👑"], 12);
+    } catch (err) {
+      $("orderStatus").textContent = "it didn't go through 🥺 try once more?";
+    }
+  }
+  $("orderSend").addEventListener("click", place);
+  $("orderText").addEventListener("keydown", (e) => e.key === "Enter" && place(e));
+
+  watch("orders", (items) => {
+    const list = (items || []).slice(0, 8);
+    $("orderList").innerHTML = list.length
+      ? `<p class="muted tiny" style="width:100%">your recent orders:</p>` + list.map((o) =>
+          `<span class="cyc-log-item">${esc(o.role || "")} · ${esc(o.what || "")} <small>${esc(o.when || "")}</small></span>`).join("")
+      : "";
   });
 })();

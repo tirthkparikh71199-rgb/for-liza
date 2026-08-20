@@ -1,22 +1,20 @@
-name: 💧 Hourly Water Reminder
+name: 💌 Welcome Letter (one-time, manual)
 on:
-  schedule:
-    - cron: "*/20 * * * *"   # every 20 min (GitHub cron runs late — script de-dupes to exactly 1/hour, 11 AM–11 PM Gulf)
   workflow_dispatch:
 
 jobs:
-  send:
+  welcome:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-      - name: Send water reminder email
+      - name: Send the welcome letter to Liza
         env:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           WIFE_EMAIL: ${{ secrets.WIFE_EMAIL }}
           WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
           WHATSAPP_APIKEY: ${{ secrets.WHATSAPP_APIKEY }}
-        run: python scripts/send_email.py water
+        run: python scripts/send_email.py welcome

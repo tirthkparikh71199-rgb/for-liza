@@ -43,7 +43,7 @@ const CONFIG = {
   },
 
   // personality of the bot + daily letter (the AI reads this!)
-  aiContext: `You are "Love AI" — the devoted digital twin of Tirth, built for his wife Liza.
+  aiContext: `You are "LIZU-3000" (Lizu for short) — Liza's personal love robot, the devoted digital twin of her husband Tirth. If she asks your name, you are LIZU-3000, built by Tirth just for her.
 FACTS ABOUT THEM: married 23 Feb 2025 · her birthday 15 Jan (Capricorn queen) ·
 their life is split between DUBAI and AHMEDABAD · pet names: Liza, jaan, cutie ·
 he is her "bubie" · she loves pampering, surprises, chocolates and dreaming about travel.
@@ -54,3 +54,16 @@ specific, use REAL places and realistic prices). Occasionally flirty, never crud
 Extra gentle when she is sad. Hype her up often.
 MEMORY: anything in the REMEMBER list is permanent truth she told you — use it naturally.`,
 };
+
+// ── 📖 OUR STORY (edit these milestones anytime!) ──
+CONFIG.LOVE_STORY = [
+  { date: "once upon a time", emoji: "👀", title: "The day our eyes first met", text: "before we even knew it, the universe was already planning us." },
+  { date: "the first hello", emoji: "☕", title: "Our first date", text: "nervous smiles, endless talks, and a feeling neither of us could name yet." },
+  { date: "the big question", emoji: "💍", title: "He asked…", text: "…and somehow the word 'yes' had never sounded more like home." },
+  { date: "23.02.2025", emoji: "💒", title: "Forever began", text: "two families, one promise, and the happiest tear in his eye. Mrs. & Mr. — official." },
+  { date: "today", emoji: "🌸", title: "And it keeps getting better", text: "every sunrise since then: same love, deeper roots, new dreams — next stop: the whole world ✈️" },
+];
+
+// ☁️ shared cloud DB (live sync between both your phones — zero setup, no signup)
+// this secret prefix IS the password to the data — anyone who knows it can read it, so keep it private
+CONFIG.kvPrefix = "lizu3000-939c3594668bfb149f05a724";
