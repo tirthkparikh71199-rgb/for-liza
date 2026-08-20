@@ -580,3 +580,4 @@ footer { padding-bottom: 110px; }
 /* veg toggle */
 .veg-toggle { cursor: pointer; font-family: inherit; transition: 0.22s; }
 .veg-toggle.on { color: #fff; border-color: rgba(120,255,170,0.55); background: rgba(60,255,150,0.14); box-shadow: 0 0 14px rgba(60,255,150,0.35); }
+.cyc-fact-wide { grid-column: 1 / -1; }

@@ -1029,6 +1029,25 @@ function gameOver(box, score, best, label) {
 
   let S = { lastStart: "", cycleLen: 28, periodLen: 5, history: [] };
 
+  /* history entries are { s: startDate, e: endDate|null } — old versions stored bare strings */
+  const normHist = (h) => (h || []).map((x) => (typeof x === "string" ? { s: x, e: null } : x))
+    .filter((x) => x && x.s).sort((a, b) => (a.s < b.s ? -1 : 1));
+  const addStart = (h, date) => {
+    const n = normHist(h).filter((x) => x.s !== date);
+    n.push({ s: date, e: null });
+    return n.slice(-24);
+  };
+  /* averages learned from her own logs */
+  const learnCycle = (h) => {
+    const st = normHist(h).map((x) => x.s);
+    const gaps = st.slice(1).map((d, i) => daysBetween(parse(st[i]), parse(d))).filter((g) => g >= 20 && g <= 45);
+    return gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) : null;
+  };
+  const learnPeriod = (h) => {
+    const lens = normHist(h).filter((x) => x.e).map((x) => daysBetween(parse(x.s), parse(x.e)) + 1).filter((n) => n >= 1 && n <= 12);
+    return lens.length ? Math.round(lens.reduce((a, b) => a + b, 0) / lens.length) : null;
+  };
+
   /* which phase a given date falls in, relative to the last period start */
   function phaseOf(date) {
     if (!S.lastStart) return null;
@@ -1036,7 +1055,7 @@ function gameOver(box, score, best, label) {
     let day = daysBetween(start, date) % S.cycleLen;   // 0-indexed day of cycle
     if (day < 0) day += S.cycleLen;
     const ovu = S.cycleLen - 14;                        // luteal phase is the stable ~14 days
-    if (day < S.periodLen) return { day, name: "period", label: "🩸 period days" };
+    if (day < (S.periodLen || 5)) return { day, name: "period", label: "🩸 period days" };
     if (day === ovu) return { day, name: "ovu", label: "🥚 ovulation day" };
     if (day >= ovu - 5 && day <= ovu + 1) return { day, name: "fertile", label: "💞 fertile window" };
     if (day >= S.cycleLen - 4) return { day, name: "pms", label: "🌙 PMS window" };
@@ -1077,6 +1096,25 @@ function gameOver(box, score, best, label) {
     $("cycOvu").textContent = pretty(ovuDate);
     $("cycFertile").textContent = `${pretty(fertStart)} – ${pretty(fertEnd)}`;
     $("cycPms").textContent = `${pretty(pmsStart)} – ${pretty(addDays(nextPeriod, -1))}`;
+    /* real logged period range for the cycle she's in right now */
+    const hist = normHist(S.history);
+    const cur = hist.filter((x) => daysBetween(parse(x.s), today) >= 0).slice(-1)[0];
+    const rangeEl = $("cycPeriodRange"), labEl = $("cycPeriodLab");
+    if (rangeEl) {
+      if (cur && !cur.e && daysBetween(parse(cur.s), today) <= 11) {
+        const dn = daysBetween(parse(cur.s), today) + 1;
+        rangeEl.textContent = `${pretty(parse(cur.s))} → running (day ${dn})`;
+        labEl.textContent = "tap 🛑 when it ends";
+      } else if (cur && cur.e) {
+        const len = daysBetween(parse(cur.s), parse(cur.e)) + 1;
+        rangeEl.textContent = `${pretty(parse(cur.s))} – ${pretty(parse(cur.e))} · ${len}d`;
+        labEl.textContent = "last period (logged)";
+      } else {
+        const est = addDays(nextPeriod, (S.periodLen || 5) - 1);
+        rangeEl.textContent = `${pretty(nextPeriod)} – ${pretty(est)}`;
+        labEl.textContent = `next period · ~${S.periodLen || 5} days (expected)`;
+      }
+    }
     $("cycMsg").textContent = MSG[ph.name] || "";
 
     const circ = 2 * Math.PI * 52;
@@ -1103,7 +1141,7 @@ function gameOver(box, score, best, label) {
   $("cycSave").addEventListener("click", async (e) => {
     const last = $("cycLast").value;
     if (!last) { $("cycMsg").textContent = "pick the date your last period started first 💕"; return; }
-    const hist = Array.from(new Set([...(S.history || []), last])).sort().slice(-24);
+    const hist = addStart(S.history, last);
     await save({ lastStart: last, cycleLen: +$("cycLen").value || 28, periodLen: +$("cycPer").value || 5, history: hist });
     confetti(e.clientX, e.clientY, 10);
     $("cycMsg").textContent = "saved 💾 he's got you covered, jaan";
@@ -1111,19 +1149,32 @@ function gameOver(box, score, best, label) {
 
   $("cycStarted").addEventListener("click", async (e) => {
     const t = key(new Date());
-    const hist = Array.from(new Set([...(S.history || []), t])).sort().slice(-24);
-    /* learn her real average cycle length from her own history */
-    let len = S.cycleLen;
-    if (hist.length >= 2) {
-      const gaps = hist.slice(1).map((d, i) => daysBetween(parse(hist[i]), parse(d))).filter((g) => g >= 20 && g <= 45);
-      if (gaps.length) len = Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length);
-    }
+    const hist = addStart(S.history, t);
+    const len = learnCycle(hist) || S.cycleLen;
     $("cycLast").value = t; $("cycLen").value = len;
     await save({ lastStart: t, cycleLen: len, history: hist });
     confetti(e.clientX, e.clientY, 12);
-    $("cycMsg").textContent = hist.length >= 2
+    $("cycMsg").textContent = learnCycle(hist)
       ? `logged 🩸 your average cycle is ${len} days — predictions updated`
-      : "logged 🩸 rest up, my love — I'll track the rest 💕";
+      : "logged 🩸 rest up, my love — tap 🛑 when it's over and I'll learn your rhythm 💕";
+  });
+
+  /* 🛑 real end date — this is what makes period length dynamic instead of a guess */
+  $("cycEnded").addEventListener("click", async (e) => {
+    const t = key(new Date());
+    const hist = normHist(S.history);
+    const open = [...hist].reverse().find((x) => !x.e && daysBetween(parse(x.s), parse(t)) >= 0);
+    if (!open) {
+      $("cycMsg").textContent = "log the start first, jaan — tap 🩸 when it begins 💕";
+      return;
+    }
+    open.e = t;
+    const thisLen = daysBetween(parse(open.s), parse(t)) + 1;
+    const avg = learnPeriod(hist) || thisLen;
+    $("cycPer").value = avg;
+    await save({ periodLen: avg, history: hist });
+    confetti(e.clientX, e.clientY, 10);
+    $("cycMsg").textContent = `logged 🛑 that one lasted ${thisLen} day${thisLen > 1 ? "s" : ""} · your average is ${avg} — it's all learned from you 💕`;
   });
 
   $("cycRemind").addEventListener("click", async () => {
@@ -1165,6 +1216,9 @@ function gameOver(box, score, best, label) {
     const saved = await fetchDoc("cycle", "settings");
     if (saved) {
       S = Object.assign(S, saved);
+      S.history = normHist(S.history);
+      S.cycleLen = learnCycle(S.history) || S.cycleLen;
+      S.periodLen = learnPeriod(S.history) || S.periodLen;
       $("cycLast").value = S.lastStart || "";
       $("cycLen").value = S.cycleLen; $("cycPer").value = S.periodLen;
     }
