@@ -1,4 +1,4 @@
-/* ═══════════ FOR FATS ❤️ — the whole brain ═══════════ */
+/* ═══════════ FOR LIZA ❤️ — the whole brain ═══════════ */
 const $ = (id) => document.getElementById(id);
 const todayKey = () => {
   const d = new Date();
@@ -112,19 +112,6 @@ if (matchMedia("(hover:hover) and (pointer:fine)").matches) {
     document.body.appendChild(s); setTimeout(() => s.remove(), 900);
   });
 }
-(function floaters() {
-  const em = ["💗", "🌸", "💕", "✨", "🦋"];
-  for (let i = 0; i < 9; i++) {
-    const s = document.createElement("span");
-    s.textContent = em[i % em.length];
-    s.style.left = Math.random() * 100 + "vw";
-    s.style.fontSize = 1 + Math.random() * 1.4 + "rem";
-    s.style.animationDuration = 14 + Math.random() * 16 + "s";
-    s.style.animationDelay = -Math.random() * 20 + "s";
-    $("heroHearts").appendChild(s);
-  }
-})();
-
 /* ─────────── ⏱️ COUNTERS & COUNTDOWNS ─────────── */
 const loveStart = new Date(CONFIG.loveStartDate);
 setInterval(() => {
@@ -184,10 +171,41 @@ async function askAI(userMsg, opts = {}) {
 
 /* ─────────── 💌 DAILY LETTER ─────────── */
 const FALLBACK_LETTERS = [
-  { letter: "My dearest Fats, another day has begun and my first thought was you — as always. You make ordinary days feel like festivals and quiet evenings feel like home. I hope today is as soft and beautiful as your heart.", poem: "Morning light on your sleepy face,\nmy favorite view, my favorite place.\nAnother day, another chance to say —\nI love you more than yesterday." },
+  { letter: "My dearest Liza, another day has begun and my first thought was you — as always. You make ordinary days feel like festivals and quiet evenings feel like home. I hope today is as soft and beautiful as your heart.", poem: "Morning light on your sleepy face,\nmy favorite view, my favorite place.\nAnother day, another chance to say —\nI love you more than yesterday." },
   { letter: "Jaan, if I could bottle the way you laugh, I'd be the richest man in Dubai. Thank you for choosing me every single day. I don't say it enough, but you are my greatest blessing.", poem: "Your laugh, my favorite song,\nwith you is where I belong.\nThrough every high and every low,\nit's you and me — that's all I know." },
-  { letter: "Fats, somewhere between our first hello and this very moment, you became my whole world. Drink your water, eat well, and remember — someone is counting hours to see you.", poem: "The sun rose twice since I saw you last,\ntime without you moves so fast… said no one — it crawls!\nCome home soon, my heart, my muse,\nit's your smile I always choose." },
+  { letter: "Liza, somewhere between our first hello and this very moment, you became my whole world. Drink your water, eat well, and remember — someone is counting hours to see you.", poem: "The sun rose twice since I saw you last,\ntime without you moves so fast… said no one — it crawls!\nCome home soon, my heart, my muse,\nit's your smile I always choose." },
 ];
+/* ─────────── 💌 DAILY LETTER (sealed envelope → typewriter) ─────────── */
+let TODAY_LETTER = null;
+function typewrite(el, text, done) {
+  el.textContent = "";
+  let i = 0;
+  const cursor = document.createElement("span");
+  cursor.className = "type-cursor";
+  cursor.innerHTML = "&nbsp;";
+  const skip = () => { i = text.length; };
+  el.addEventListener("click", skip, { once: true });
+  const t = setInterval(() => {
+    i += 2;
+    el.textContent = text.slice(0, i);
+    el.appendChild(cursor);
+    if (i >= text.length) { clearInterval(t); el.textContent = text; cursor.remove(); done && done(); }
+  }, 16);
+}
+$("envelope").addEventListener("click", () => {
+  const env = $("envelope");
+  if (env.classList.contains("open")) return;
+  if (!TODAY_LETTER) { env.querySelector(".env-hint").textContent = "sealing it with love… 💕"; return; }
+  env.classList.add("open");
+  const r = env.getBoundingClientRect();
+  confetti(r.left + r.width / 2, r.top + 60, 20);
+  setTimeout(() => env.classList.add("gone"), 700);
+  setTimeout(() => {
+    env.style.display = "none";
+    $("letterContent").classList.remove("hidden");
+    typewrite($("letterBody"), TODAY_LETTER.body, () => { $("letterPoem").textContent = TODAY_LETTER.poem || ""; });
+  }, 1150);
+});
 (async function letter() {
   const today = todayKey();
   $("letterDate").textContent = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -195,16 +213,11 @@ const FALLBACK_LETTERS = [
     const r = await fetch("daily.json?d=" + Date.now());
     if (r.ok) {
       const d = await r.json();
-      if (d.date === today && d.letter) {
-        $("letterBody").textContent = d.letter;
-        $("letterPoem").textContent = d.poem || "";
-        return;
-      }
+      if (d.date === today && d.letter) { TODAY_LETTER = { body: d.letter, poem: d.poem || "" }; return; }
     }
   } catch (e) {}
   const f = FALLBACK_LETTERS[dayOfYear() % FALLBACK_LETTERS.length];
-  $("letterBody").textContent = f.letter;
-  $("letterPoem").textContent = f.poem;
+  TODAY_LETTER = { body: f.letter, poem: f.poem };
 })();
 
 /* ─────────── 🔮 HOROSCOPE (AI, cached daily) ─────────── */
@@ -213,7 +226,7 @@ const FALLBACK_LETTERS = [
   const cached = localStorage.getItem(key);
   if (cached) { $("horoText").textContent = cached; return; }
   try {
-    const t = await askAI(`Give my wife Fats (Capricorn, born 15 Jan) a sweet 2-3 sentence love-focused horoscope for today, ${new Date().toDateString()}. Warm, playful, hopeful — from the stars, with love.`);
+    const t = await askAI(`Give my wife Liza (Capricorn, born 15 Jan) a sweet 2-3 sentence love-focused horoscope for today, ${new Date().toDateString()}. Warm, playful, hopeful — from the stars, with love.`);
     localStorage.setItem(key, t);
     $("horoText").textContent = t;
   } catch (e) {
@@ -352,7 +365,7 @@ $("spotifyFrame").src = CONFIG.spotifyEmbed;
 /* ─────────── 📸 PHOTO MEMORIES (IndexedDB) ─────────── */
 const idb = {
   open: () => new Promise((res, rej) => {
-    const r = indexedDB.open("forFats", 1);
+    const r = indexedDB.open("forLiza", 1);
     r.onupgradeneeded = () => r.result.createObjectStore("photos", { keyPath: "id", autoIncrement: true });
     r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   }),
@@ -456,16 +469,16 @@ const QUESTIONS = ["What's your favorite memory of us so far?", "One thing I do 
 $("qodText").textContent = "“" + QUESTIONS[dayOfYear() % QUESTIONS.length] + "”";
 (async function qod() {
   const a = await fetchDoc("answers", todayKey());
-  if (a) { if (a.fats) $("ansFats").value = a.fats; if (a.tirth) $("ansTirth").value = a.tirth; renderAnswers(a); }
+  if (a) { if (a.fats) $("ansLiza").value = a.fats; if (a.tirth) $("ansTirth").value = a.tirth; renderAnswers(a); }
 })();
 $("ansSave").addEventListener("click", async (e) => {
-  const a = { fats: $("ansFats").value.trim(), tirth: $("ansTirth").value.trim(), ts: Date.now() };
+  const a = { fats: $("ansLiza").value.trim(), tirth: $("ansTirth").value.trim(), ts: Date.now() };
   await store("answers", todayKey(), a);
   renderAnswers(a);
   confetti(e.clientX, e.clientY, 10);
 });
 function renderAnswers(a) {
-  $("ansShow").innerHTML = (a.fats ? `<div class="ans-bubble"><b>🩷 Fats:</b> ${esc(a.fats)}</div>` : "") + (a.tirth ? `<div class="ans-bubble"><b>💙 Tirth:</b> ${esc(a.tirth)}</div>` : "");
+  $("ansShow").innerHTML = (a.fats ? `<div class="ans-bubble"><b>🩷 Liza:</b> ${esc(a.fats)}</div>` : "") + (a.tirth ? `<div class="ans-bubble"><b>💙 Tirth:</b> ${esc(a.tirth)}</div>` : "");
 }
 
 /* ─────────── 📝 LISTS (shared + wishlist) ─────────── */
@@ -549,14 +562,14 @@ async function sendPing(msg) {
     await fetch("https://formsubmit.co/ajax/" + CONFIG.tirthEmail, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ _subject: "💌 Ping from Fats!", message: msg }),
+      body: JSON.stringify({ _subject: "💌 Ping from Liza!", message: msg }),
     });
     $("pingStatus").textContent = "delivered to his inbox! 💕";
     pushItem("pings", { text: msg });
   } catch (e) { $("pingStatus").textContent = "hmm, it didn't go — try again, jaan 🥺"; }
 }
 document.querySelectorAll("[data-ping]").forEach((b) => b.addEventListener("click", (e) => { sendPing(b.dataset.ping); confetti(e.clientX, e.clientY, 8); }));
-$("pingSend").addEventListener("click", () => { const t = $("pingText").value.trim(); if (!t) return; sendPing("💌 Fats says: " + t); $("pingText").value = ""; });
+$("pingSend").addEventListener("click", () => { const t = $("pingText").value.trim(); if (!t) return; sendPing("💌 Liza says: " + t); $("pingText").value = ""; });
 
 /* ─────────── 💕 LOVE AI CHAT ─────────── */
 const chatHist = [];
@@ -586,7 +599,7 @@ async function sendChat() {
 $("chatSend").addEventListener("click", sendChat);
 $("chatInput").addEventListener("keydown", (e) => e.key === "Enter" && sendChat());
 document.querySelectorAll("[data-q]").forEach((b) => b.addEventListener("click", () => { $("chatInput").value = b.dataset.q; sendChat(); }));
-addMsg(`Hi Fats 💕 I'm Love AI — Tirth built me so you're never bored, hungry, lost, or unloved. Ask me anything: compliments, dinner plans, Dubai deals, trip planning… I'm all yours.`, "bot");
+addMsg(`Hi Liza 💕 I'm Love AI — Tirth built me so you're never bored, hungry, lost, or unloved. Ask me anything: compliments, dinner plans, Dubai deals, trip planning… I'm all yours.`, "bot");
 
 /* ─────────── 🤗 HUG ─────────── */
 $("hugBtn").addEventListener("click", () => {
@@ -597,3 +610,191 @@ $("hugBtn").addEventListener("click", () => {
 /* ─────────── reveal on scroll ─────────── */
 const io = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && e.target.classList.add("in")), { threshold: 0.08 });
 document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+
+/* ═══════════ 💕 LOVE UNIVERSE ENGINE ═══════════ */
+/* loader */
+addEventListener("load", () => setTimeout(() => $("loader").classList.add("done"), 900));
+setTimeout(() => $("loader").classList.add("done"), 3200);
+
+/* floating hearts + twinkling stars canvas */
+(function loveCanvas() {
+  const cv = $("loveCanvas"), ctx = cv.getContext("2d");
+  let W, H;
+  const resize = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; };
+  resize(); addEventListener("resize", resize);
+  const COLORS = ["#ff5c8a", "#ff2d55", "#c77dff", "#ffb3c6", "#ff85a2"];
+  const NH = innerWidth < 760 ? 16 : 30, NS = innerWidth < 760 ? 40 : 70;
+  const hearts = Array.from({ length: NH }, (_, i) => ({
+    x: Math.random() * W, y: Math.random() * H,
+    s: 5 + Math.random() * 13, v: 0.25 + Math.random() * 0.6,
+    o: 0.1 + Math.random() * 0.28, c: COLORS[i % COLORS.length], w: Math.random() * 6.28,
+  }));
+  const stars = Array.from({ length: NS }, () => ({
+    x: Math.random() * W, y: Math.random() * H, r: 0.4 + Math.random() * 1.3, tw: Math.random() * 6.28,
+  }));
+  function drawHeart(x, y, s) {
+    ctx.beginPath();
+    ctx.moveTo(x, y + s * 0.4);
+    ctx.bezierCurveTo(x - s, y - s * 0.5, x - s * 0.45, y - s * 1.15, x, y - s * 0.4);
+    ctx.bezierCurveTo(x + s * 0.45, y - s * 1.15, x + s, y - s * 0.5, x, y + s * 0.4);
+    ctx.fill();
+  }
+  (function loop() {
+    ctx.clearRect(0, 0, W, H);
+    const t = Date.now() / 1000;
+    stars.forEach((s) => {
+      ctx.globalAlpha = 0.25 + Math.abs(Math.sin(t * 1.5 + s.tw)) * 0.55;
+      ctx.fillStyle = "#ffd9e6";
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.28); ctx.fill();
+    });
+    hearts.forEach((h) => {
+      h.y -= h.v;
+      h.x += Math.sin(t + h.w) * 0.35;
+      if (h.y < -30) { h.y = H + 30; h.x = Math.random() * W; }
+      ctx.globalAlpha = h.o;
+      ctx.fillStyle = h.c;
+      drawHeart(h.x, h.y, h.s);
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* kiss button */
+$("kissBtn").addEventListener("click", () => {
+  emojiRain(["😘", "💋", "❤️", "💕"], 28);
+  if (navigator.vibrate) navigator.vibrate([60, 50, 60, 50, 160]);
+});
+
+/* touch heart-trail (mobile) */
+addEventListener("touchmove", (e) => {
+  const t = Date.now();
+  if (t - (window.__lastTrail || 0) < 130) return;
+  window.__lastTrail = t;
+  const s = document.createElement("span");
+  s.className = "trail-heart"; s.textContent = "💗";
+  s.style.left = e.touches[0].clientX - 7 + "px";
+  s.style.top = e.touches[0].clientY - 7 + "px";
+  document.body.appendChild(s); setTimeout(() => s.remove(), 900);
+}, { passive: true });
+
+/* 3D card tilt (desktop) */
+if (matchMedia("(hover:hover) and (pointer:fine)").matches) {
+  document.querySelectorAll(".card").forEach((c) => {
+    c.addEventListener("pointermove", (e) => {
+      const r = c.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      c.style.transform = `perspective(900px) rotateX(${(-y * 5).toFixed(2)}deg) rotateY(${(x * 6).toFixed(2)}deg) translateY(-4px)`;
+    });
+    c.addEventListener("pointerleave", () => (c.style.transform = ""));
+  });
+}
+
+/* ═══════════ 🎮 ARCADE ═══════════ */
+document.querySelectorAll("[data-game]").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll("[data-game]").forEach((x) => x.classList.remove("active"));
+  b.classList.add("active");
+  $("gameHc").classList.toggle("hidden", b.dataset.game !== "hc");
+  $("gameBp").classList.toggle("hidden", b.dataset.game !== "bp");
+}));
+function gameOver(box, score, best, label) {
+  const d = document.createElement("div");
+  d.className = "game-over";
+  d.innerHTML = `<b>${label}</b><span>score ${score} · best ${best}</span><span class="script-font" style="font-size:1.4rem;color:var(--pink-soft)">you win my heart — again 💕</span>`;
+  box.appendChild(d);
+  setTimeout(() => d.remove(), 3500);
+}
+
+/* 💘 Heart Catcher */
+(function heartCatcher() {
+  const cv = $("hcCanvas"), ctx = cv.getContext("2d");
+  let playing = false, score = 0, time = 30, hearts = [], basketX = 0.5, timer = null, spawner = null, raf = null;
+  const fit = () => { cv.width = cv.clientWidth; cv.height = cv.clientHeight; };
+  fit(); addEventListener("resize", fit);
+  const move = (clientX) => {
+    const r = cv.getBoundingClientRect();
+    basketX = Math.min(Math.max((clientX - r.left) / r.width, 0.06), 0.94);
+  };
+  cv.addEventListener("pointermove", (e) => move(e.clientX));
+  cv.addEventListener("touchmove", (e) => { move(e.touches[0].clientX); e.preventDefault(); }, { passive: false });
+  $("hcBest").textContent = localStorage.getItem("hc_best") || 0;
+  function loop() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    const bx = basketX * cv.width, by = cv.height - 34;
+    ctx.font = "34px serif"; ctx.textAlign = "center";
+    ctx.fillText("💖", bx, by);
+    hearts.forEach((h) => {
+      h.y += h.v; h.x += Math.sin(h.y / 40) * 0.6;
+      ctx.font = h.s + "px serif";
+      ctx.fillText(h.e, h.x, h.y);
+      if (Math.abs(h.y - by + 10) < 26 && Math.abs(h.x - bx) < 38) { h.caught = true; score++; $("hcScore").textContent = score; }
+    });
+    hearts = hearts.filter((h) => !h.caught && h.y < cv.height + 30);
+    if (playing) raf = requestAnimationFrame(loop);
+  }
+  $("hcStart").addEventListener("click", () => {
+    if (playing) return;
+    playing = true; score = 0; time = 30; hearts = [];
+    $("hcScore").textContent = 0; $("hcTime").textContent = 30;
+    fit(); loop();
+    spawner = setInterval(() => {
+      const em = ["💕", "💗", "❤️", "🩷", "💝"];
+      hearts.push({ x: 24 + Math.random() * (cv.width - 48), y: -20, v: 1.4 + Math.random() * 1.8, s: 20 + Math.random() * 14, e: em[Math.floor(Math.random() * em.length)] });
+    }, 480);
+    timer = setInterval(() => {
+      time--; $("hcTime").textContent = time;
+      if (time <= 0) {
+        clearInterval(timer); clearInterval(spawner); playing = false;
+        const best = Math.max(score, +localStorage.getItem("hc_best") || 0);
+        localStorage.setItem("hc_best", best); $("hcBest").textContent = best;
+        gameOver(cv.parentElement, score, best, score > 14 ? "unbelievable 😍" : score > 8 ? "so good! 💘" : "my heart is safe with you");
+      }
+    }, 1000);
+  });
+})();
+
+/* 🎈 Balloon Pop (love notes inside) */
+(function balloonPop() {
+  const field = $("bpField");
+  const NOTES = ["i love you 💕", "cutest wife ever 🥰", "my jaan 💖", "you + me = ♾️", "kiss incoming 😘", "best decision: you 💍", "you're home 🏡", "forever yours ❤️", "my peace 🕊️", "hug credit +1 🤗"];
+  const EMOJI = ["🎈", "🎈", "❤️", "💜", "💙", "🩷"];
+  let playing = false, score = 0, time = 30, timer = null, spawner = null;
+  $("bpBest").textContent = localStorage.getItem("bp_best") || 0;
+  $("bpStart").addEventListener("click", () => {
+    if (playing) return;
+    playing = true; score = 0; time = 30;
+    $("bpScore").textContent = 0; $("bpTime").textContent = 30;
+    field.innerHTML = "";
+    spawner = setInterval(() => {
+      const b = document.createElement("span");
+      b.className = "balloon";
+      b.textContent = EMOJI[Math.floor(Math.random() * EMOJI.length)];
+      b.style.left = 4 + Math.random() * 86 + "%";
+      b.style.animationDuration = 3 + Math.random() * 2.2 + "s";
+      b.addEventListener("pointerdown", (e) => {
+        score++; $("bpScore").textContent = score;
+        const n = document.createElement("span");
+        n.className = "pop-note";
+        n.textContent = Math.random() < 0.65 ? NOTES[Math.floor(Math.random() * NOTES.length)] : "💥 pop!";
+        n.style.left = Math.min(e.clientX - field.getBoundingClientRect().left - 40, field.clientWidth - 150) + "px";
+        n.style.top = e.clientY - field.getBoundingClientRect().top + "px";
+        field.appendChild(n);
+        setTimeout(() => n.remove(), 1600);
+        b.remove();
+      });
+      field.appendChild(b);
+      setTimeout(() => b.remove(), 5400);
+    }, 620);
+    timer = setInterval(() => {
+      time--; $("bpTime").textContent = time;
+      if (time <= 0) {
+        clearInterval(timer); clearInterval(spawner); playing = false;
+        field.querySelectorAll(".balloon").forEach((b) => b.remove());
+        const best = Math.max(score, +localStorage.getItem("bp_best") || 0);
+        localStorage.setItem("bp_best", best); $("bpBest").textContent = best;
+        gameOver(field, score, best, score > 16 ? "balloon queen 👑" : score > 9 ? "popping pro 🎈" : "every pop was a kiss 😘");
+      }
+    }, 1000);
+  });
+})();

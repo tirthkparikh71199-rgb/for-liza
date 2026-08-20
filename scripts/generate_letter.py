@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""✨ Generates today's AI love letter + poem for Fats → daily.json"""
+"""✨ Generates today's AI love letter + poem for Liza → daily.json"""
 import os, json, datetime, urllib.request
 
-PROMPT = """Write today's love letter from Tirth to his wife Fats (married 23 Feb 2025, living in Dubai).
-Rules: 70-100 words, warm, playful, deeply in love, mention the date subtly or the season. Pet names: Fats, jaan, cutie. Never crude.
+PROMPT = """Write today's love letter from Tirth to his wife Liza (married 23 Feb 2025, living in Dubai).
+Rules: 70-100 words, warm, playful, deeply in love, mention the date subtly or the season. Pet names: Liza, jaan, cutie. Never crude.
 Then a 4-line cute rhyming poem.
 Format EXACTLY:
 LETTER:
@@ -12,7 +12,7 @@ POEM:
 <4 lines>"""
 
 FALLBACK = {
-    "letter": "My dearest Fats, today the AI took a tiny day off, but my love didn't. You are my first thought every morning and my last every night. Drink water, smile lots, and know that I'm yours completely.",
+    "letter": "My dearest Liza, today the AI took a tiny day off, but my love didn't. You are my first thought every morning and my last every night. Drink water, smile lots, and know that I'm yours completely.",
     "poem": "Roses are red, the Gulf sky is blue,\nno matter the day, I'm thinking of you.\nThrough code and through circuits this much is true —\nforever and always, it's me and you.",
 }
 

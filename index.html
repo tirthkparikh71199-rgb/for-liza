@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#ff4d8d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>For Fats ❤️</title>
+  <title>For Liza ❤️</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❤️</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,24 +17,27 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 </head>
 <body>
+  <div id="loader"><div class="loader-heart">❤️</div><p class="script-font">made with love, for Liza…</p></div>
+  <canvas id="loveCanvas"></canvas>
   <div class="bg-blobs"><span></span><span></span><span></span></div>
-  <div class="hero-hearts" id="heroHearts"></div>
 
   <nav>
-    <span class="brand script-font">Fats ❤️ Tirth</span>
+    <span class="brand script-font">Liza ❤️ Tirth</span>
     <div class="nav-links">
       <a href="#letter">💌 Letter</a>
       <a href="#mood">😊 Mood</a>
       <a href="#photos">📸 Photos</a>
       <a href="#notes">❤️ Notes</a>
       <a href="#travel">✈️ Travel</a>
+      <a href="#play">🎮 Play</a>
       <a href="#bot">💕 Love AI</a>
     </div>
   </nav>
 
   <header class="hero">
     <p class="eyebrow">good morning, good night &amp; everything in between, my</p>
-    <h1 class="script-font shimmer">Fats</h1>
+    <h1 class="script-font shimmer">Liza</h1>
+    <div class="heartbeat">❤️</div>
     <div class="love-counter glass">
       <p class="counter-label">he has loved you for</p>
       <div class="counter-boxes">
@@ -49,7 +52,10 @@
       <div class="cd-pill glass">🎂 your birthday in <b id="cdBday">…</b></div>
       <div class="cd-pill glass">💍 your anniversary in <b id="cdAnni">…</b></div>
     </div>
-    <button class="big-btn hug" id="hugBtn">🤗 need a hug?</button>
+    <div class="hero-btns">
+      <button class="big-btn hug" id="hugBtn">🤗 need a hug?</button>
+      <button class="big-btn" id="kissBtn">😘 need a kiss?</button>
+    </div>
   </header>
 
   <main class="bento">
@@ -61,9 +67,17 @@
         <span class="chip ai-chip">✨ AI-written · new every day</span>
       </div>
       <p class="letter-date muted" id="letterDate"></p>
-      <p class="letter-body script-font" id="letterBody">loading today's letter…</p>
-      <p class="letter-poem" id="letterPoem"></p>
-      <p class="sig">— forever, your Tirth ❤️</p>
+      <div class="envelope" id="envelope">
+        <div class="env-flap"></div>
+        <div class="env-pocket"></div>
+        <div class="env-seal">❤️</div>
+        <p class="env-hint">tap to open 💌</p>
+      </div>
+      <div id="letterContent" class="letter-content hidden">
+        <p class="letter-body script-font" id="letterBody"></p>
+        <p class="letter-poem" id="letterPoem"></p>
+        <p class="sig">— forever, your Tirth ❤️</p>
+      </div>
     </section>
 
     <!-- DUBAI WEATHER + WORLD FX -->
@@ -100,7 +114,7 @@
       <input id="moodNote" class="text-input" placeholder="one line about your day… (optional)" maxlength="120" />
       <button class="big-btn" id="moodSave">save today's mood 💾</button>
       <div class="mood-history" id="moodHistory"></div>
-      <small class="muted">he checks this every day to know how his Fats is doing 🥺</small>
+      <small class="muted">he checks this every day to know how his Liza is doing 🥺</small>
     </section>
 
     <!-- FOOD DECIDER -->
@@ -161,7 +175,7 @@
       <div class="note-form">
         <select id="noteFrom" class="text-input slim">
           <option value="Tirth">💙 from Tirth</option>
-          <option value="Fats">🩷 from Fats</option>
+          <option value="Liza">🩷 from Liza</option>
         </select>
         <input id="noteText" class="text-input" placeholder="write something soft…" maxlength="200" />
         <button class="big-btn" id="noteAdd">pin it 📌</button>
@@ -198,7 +212,7 @@
     <section id="question" class="card reveal">
       <div class="card-head"><h2>❓ Question of the Day</h2><span class="chip">for both of you</span></div>
       <p class="qod script-font" id="qodText"></p>
-      <input id="ansFats" class="text-input" placeholder="🩷 Fats answers…" maxlength="150" />
+      <input id="ansLiza" class="text-input" placeholder="🩷 Liza answers…" maxlength="150" />
       <input id="ansTirth" class="text-input" placeholder="💙 Tirth answers…" maxlength="150" />
       <button class="big-btn" id="ansSave">lock in today's answers 💞</button>
       <div id="ansShow" class="ans-show"></div>
@@ -212,9 +226,9 @@
       </div>
       <p class="muted tiny">one tap = an instant email to him, wherever he is</p>
       <div class="ping-grid">
-        <button class="ping-btn" data-ping="😘 KISS DELIVERY — Fats just sent you a kiss through the website!">😘<small>kiss</small></button>
-        <button class="ping-btn" data-ping="🥺 MISSING YOU — Fats misses you right now. Come home soon.">🥺<small>miss you</small></button>
-        <button class="ping-btn" data-ping="☎️ CALL ME — Fats wants to hear your voice. Call her NOW.">☎️<small>call me</small></button>
+        <button class="ping-btn" data-ping="😘 KISS DELIVERY — Liza just sent you a kiss through the website!">😘<small>kiss</small></button>
+        <button class="ping-btn" data-ping="🥺 MISSING YOU — Liza misses you right now. Come home soon.">🥺<small>miss you</small></button>
+        <button class="ping-btn" data-ping="☎️ CALL ME — Liza wants to hear your voice. Call her NOW.">☎️<small>call me</small></button>
         <button class="ping-btn" data-ping="🍫 CHOCOLATE EMERGENCY — this is not a drill. Bring chocolate immediately.">🍫<small>emergency</small></button>
       </div>
       <div class="note-form">
@@ -232,7 +246,7 @@
       </div>
       <div class="game-tabs">
         <button class="tab-btn active" data-list="shared">🛒 our list</button>
-        <button class="tab-btn" data-list="wishlist">🎁 fats' wishlist</button>
+        <button class="tab-btn" data-list="wishlist">🎁 liza' wishlist</button>
       </div>
       <div class="note-form">
         <input id="todoText" class="text-input" placeholder="add something…" maxlength="100" />
@@ -252,6 +266,40 @@
       <div id="movieResults" class="movie-grid"></div>
       <h3 class="subhead">❤️ your watchlist</h3>
       <div id="watchlist" class="movie-grid"></div>
+    </section>
+
+    <!-- GAMES -->
+    <section id="play" class="card wide reveal">
+      <div class="card-head">
+        <h2>🎮 Our Little Arcade</h2>
+        <span class="chip">play with love 💕</span>
+      </div>
+      <div class="game-tabs">
+        <button class="tab-btn active" data-game="hc">💘 heart catcher</button>
+        <button class="tab-btn" data-game="bp">🎈 balloon pop</button>
+      </div>
+
+      <div id="gameHc" class="game-panel">
+        <p class="muted tiny">move with your finger — catch my hearts, 30 seconds 💘</p>
+        <div class="game-info">
+          <span>Score: <b id="hcScore">0</b></span>
+          <span>Best: <b id="hcBest">0</b></span>
+          <span>Time: <b id="hcTime">30</b>s</span>
+        </div>
+        <canvas id="hcCanvas" class="hc-canvas"></canvas>
+        <button class="big-btn" id="hcStart">▶️ start catching</button>
+      </div>
+
+      <div id="gameBp" class="game-panel hidden">
+        <p class="muted tiny">pop the balloons — love notes hide inside them 🎈</p>
+        <div class="game-info">
+          <span>Score: <b id="bpScore">0</b></span>
+          <span>Best: <b id="bpBest">0</b></span>
+          <span>Time: <b id="bpTime">30</b>s</span>
+        </div>
+        <div id="bpField" class="bp-field"></div>
+        <button class="big-btn" id="bpStart">▶️ start popping</button>
+      </div>
     </section>
 
     <!-- LOVE AI -->
@@ -278,7 +326,7 @@
   </main>
 
   <footer>
-    <p class="script-font">Fats + Tirth = forever</p>
+    <p class="script-font">Liza + Tirth = forever</p>
     <p class="muted">handmade with ❤️ by your husband · married 23.02.2025 · this site loves you even when he's asleep</p>
     <p class="muted tiny">📲 tip: tap "Add to Home Screen" so it lives on your phone like an app</p>
   </footer>
@@ -289,7 +337,7 @@
   <div id="lockScreen" class="lock-screen">
     <div class="lock-card glass" id="lockCard">
       <h2 class="script-font">for my wife only 💕</h2>
-      <p class="muted tiny">prove you're my Fats</p>
+      <p class="muted tiny">prove you're my Liza</p>
       <input id="lockName" class="text-input" placeholder="husband's name 🙈" autocomplete="off" />
       <input id="lockPass" class="text-input" type="password" placeholder="boop? 🔑" autocomplete="off" />
       <button class="big-btn" id="lockBtn">unlock my world 💘</button>

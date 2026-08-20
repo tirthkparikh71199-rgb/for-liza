@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""💌 Email engine for Fats — water reminders + daily love letter emails."""
+"""💌 Email engine for Liza — water reminders + daily love letter emails."""
 import os, sys, ssl, smtplib, json, datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -16,7 +16,7 @@ WATER_MSGS = [
     ("💧 Water break, my love", "One glass for me? Pretty please 🥺 Your favorite person wants you healthy, glowing, and hydrated."),
     ("🥤 Sip sip, jaan!", "Hydration check! Your skin is already thanking you. Drink a glass and think of me 💕"),
     ("🌸 A tiny reminder from your husband", "Water time, cutie! One glass now = extra glow today. I love you, drink up 💧"),
-    ("💦 Hydration station calling", "Fats! Water. Now. I'll know if you skip it (I won't, but pretend I will 😌💧)"),
+    ("💦 Hydration station calling", "Liza! Water. Now. I'll know if you skip it (I won't, but pretend I will 😌💧)"),
     ("🧊 Cool water, warm love", "Grab a glass, my love. Somewhere out there a husband is smiling thinking of you drinking water like a good girl 😄💕"),
     ("💧 Drink water, stay cute", "Science says hydrated people are 100% more adorable. Okay maybe not science, but I say it. Drink up 💧"),
     ("🌊 Your hourly love-hydration alert", "Water break! Also: you're beautiful, you're doing great, and someone misses you 💙"),
@@ -24,7 +24,7 @@ WATER_MSGS = [
     ("💧 Gentle nudge from Tirth", "Hydrate that beautiful body! I'll stop sending these when you finish the bottle 😤💕"),
     ("🍶 Water + love = this email", "Drink a glass, cutie. Then stretch a little. Then smile. All three are doctor's orders (I'm the doctor) 😎"),
     ("💦 Be honest… when did you last drink water?", "Exactly. Go. Now. Glass. Water. I love you 💧❤️"),
-    ("🌷 Hourly reminder: you're loved (and thirsty)", "Water time, Fats! Your husband insists. Your body agrees. Your cup is waiting 💧"),
+    ("🌷 Hourly reminder: you're loved (and thirsty)", "Water time, Liza! Your husband insists. Your body agrees. Your cup is waiting 💧"),
 ]
 
 def her_hour():
@@ -66,6 +66,6 @@ else:
     except Exception:
         pass
     if not letter:
-        letter = "Good morning, my beautiful Fats. Another day, another reason I thank my luck for you. Eat well, drink water, and save all your smiles for me ❤️"
+        letter = "Good morning, my beautiful Liza. Another day, another reason I thank my luck for you. Eat well, drink water, and save all your smiles for me ❤️"
     body = letter + (f"<br><br><i style='color:#b388ff'>{poem.replace(chr(10), '<br>')}</i>" if poem else "")
-    send("💌 your daily letter is here, Fats", html_email("A letter for my wife 💕", body, "read the full letter on your website 💻💕"))
+    send("💌 your daily letter is here, Liza", html_email("A letter for my wife 💕", body, "read the full letter on your website 💻💕"))

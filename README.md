@@ -1,4 +1,4 @@
-# For Fats ❤️
+# For Liza ❤️
 
 A love-website + daily companion for my wife — hosted free on GitHub Pages.
 
