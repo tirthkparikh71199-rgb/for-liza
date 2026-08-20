@@ -4,6 +4,7 @@ A love-website + daily companion for my wife Liza — hosted free on GitHub Page
 
 **Live:** https://tirthkparikh71199-rgb.github.io/for-liza/
 **Login:** name `bubie` · secret word `paap` 🔒
+**Her inbox:** `vorabliza@gmail.com` (emails currently point at Tirth for testing)
 
 ## What's inside
 - 🔒 Cute lock screen (wife-only)
@@ -37,7 +38,11 @@ Photos stay on-device (IndexedDB) because they're too big for the bucket.
 
 ## 🔄 Go-live: point the emails at HER inbox
 ```bash
-printf 'lizabvora@gmail.com' | gh secret set WIFE_EMAIL -R tirthkparikh71199-rgb/for-liza
+# TEST MODE (current): everything lands in Tirth's inbox
+printf 'tirthkparikh@gmail.com' | gh secret set WIFE_EMAIL -R tirthkparikh71199-rgb/for-liza
+
+# GO LIVE (her real inbox — only when you're ready):
+printf 'vorabliza@gmail.com' | gh secret set WIFE_EMAIL -R tirthkparikh71199-rgb/for-liza
 ```
 
 ## Send things manually

@@ -1,0 +1,32 @@
+<!doctype html><meta charset="utf-8"><body style="margin:0;background:#111">
+<iframe id="f" src="/index.html?preview#her" style="width:390px;height:800px;border:0"></iframe>
+<script>
+const log = [];
+function out(t){ log.push(t); }
+setTimeout(() => {
+  const w = document.getElementById("f").contentWindow, d = w.document;
+  const D = new Date(); D.setDate(D.getDate() - 25);            // day 26 of a 28-day cycle => PMS
+  const k = D.toISOString().slice(0,10);
+  d.getElementById("cycLast").value = k;
+  d.getElementById("cycLen").value = 28;
+  d.getElementById("cycPer").value = 5;
+  d.getElementById("cycSave").click();
+  setTimeout(() => {
+    const g = (id) => (d.getElementById(id)||{}).textContent;
+    out("lastStart set to " + k + " (25 days ago)");
+    out("chip:       " + g("cyclePhaseChip"));
+    out("dayNum:     " + g("cycDayNum") + " " + g("cycDayOf"));
+    out("nextPeriod: " + g("cycNextPeriod"));
+    out("ovulation:  " + g("cycOvu"));
+    out("fertile:    " + g("cycFertile"));
+    out("PMS:        " + g("cycPms"));
+    out("msg:        " + g("cycMsg"));
+    const days = [...d.querySelectorAll(".cyc-day")].map(e => e.className.replace("cyc-day","").trim()||"-");
+    out("strip:      " + days.join(","));
+    const p = document.createElement("pre");
+    p.style.cssText="position:fixed;left:400px;top:0;color:#0f0;font:12px monospace;white-space:pre-wrap;width:590px";
+    p.textContent = log.join("\n");
+    document.body.appendChild(p);
+  }, 1800);
+}, 3500);
+</script>

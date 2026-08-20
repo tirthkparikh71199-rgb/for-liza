@@ -565,3 +565,18 @@ footer { padding-bottom: 110px; }
 .role-btn.on span { filter: none; transform: scale(1.12); }
 #orderWhen { max-width: 150px; }
 @media (max-width: 760px) { #orderWhen { max-width: none; flex: 1 1 100%; } }
+
+/* ═══════════ 🩹 OVERFLOW GUARD (grid/flex kids must be allowed to shrink) ═══════════ */
+.page.on > *, main.bento > *, .card { min-width: 0; max-width: 100%; }
+.cyc-facts, .cyc-fact, .cyc-form, .cyc-lab, .note-form, .card-head { min-width: 0; }
+.cyc-fact b, .cyc-fact small { overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .cyc-top { flex-direction: column; align-items: center; gap: 14px; }
+  .cyc-facts { width: 100%; grid-template-columns: 1fr 1fr; }
+  .cyc-form { gap: 8px; }
+  .cyc-lab { flex: 1 1 100%; }
+}
+
+/* veg toggle */
+.veg-toggle { cursor: pointer; font-family: inherit; transition: 0.22s; }
+.veg-toggle.on { color: #fff; border-color: rgba(120,255,170,0.55); background: rgba(60,255,150,0.14); box-shadow: 0 0 14px rgba(60,255,150,0.35); }

@@ -201,10 +201,12 @@ function retrieve(q) {
     .sort((a, b) => b.s - a.s).slice(0, 3).map((x) => x.c).join("\n");
 }
 const getFacts = () => JSON.parse(localStorage.getItem("loveai_facts") || "[]");
+const vegNote = () => (localStorage.getItem("veg_only") !== "0" ? "\nIMPORTANT: they eat VEGETARIAN — never suggest meat, fish or egg dishes. Suggest veg options only." : "");
 async function askAI(userMsg, opts = {}) {
   const facts = getFacts();
   const sys = CONFIG.aiContext
     + (facts.length ? "\n\nREMEMBER (permanent things she told you):\n- " + facts.join("\n- ") : "")
+    + vegNote()
     + "\n\nHELPFUL FACTS (use naturally, never mention this list):\n" + retrieve(userMsg);
   const body = {
     model: CONFIG.groqModel,
@@ -360,7 +362,23 @@ async function loadMoods() {
 loadMoods();
 
 /* ─────────── 🍽️ FOOD DECIDER ─────────── */
-const FOODS = ["🍛 biryani night — order from the cheapest app!", "🍕 pizza + a rom-com", "🥘 butter chicken + garlic naan, homemade", "🍜 ramen date at home", "🌮 taco tuesday energy (any day counts)", "🍝 creamy pasta + candles", "🥗 healthy bowls… then dessert 🍰", "🍔 burger night, his treat", "🫕 hotpot night!", "🍣 sushi + sofa + cuddles", "🥞 breakfast for dinner 🥞", "🧀 cheese board + grape juice, fancy mode", "🍲 her choice — he cooks tonight 👨‍🍳", "🌯 shawarma from the favorite spot", "🍫 skip dinner, dessert only (rebel night)"];
+const FOODS_VEG = ["🍛 veg biryani night — order from the cheapest app!", "🍕 margherita pizza + a rom-com", "🧈 paneer butter masala + garlic naan, homemade", "🍜 veg ramen date at home", "🌮 taco night, veg loaded (any day counts)", "🍝 creamy alfredo pasta + candles", "🥗 healthy bowls… then dessert 🍰", "🍔 veg burger night, his treat", "🫕 veg hotpot night!", "🥟 momos + soup on the sofa", "🥞 breakfast for dinner 🥞", "🧀 cheese board + grape juice, fancy mode", "🍲 her choice — he cooks tonight 👨‍🍳", "🌯 falafel shawarma from the favorite spot", "🫓 chole bhature, no regrets", "🍚 khichdi + papad, comfort mode", "🥘 pav bhaji with extra butter", "🍫 skip dinner, dessert only (rebel night)", "🌽 masala corn + maggi, monsoon vibes", "🥔 aloo paratha with white butter 🧈", "🍕 pizza + pasta, full carb celebration", "🥙 veg mezze platter — hummus, falafel, pita", "🍛 dal makhani + jeera rice, the classic", "🧆 idli-dosa night, south-Indian mood"];
+const FOODS_ALL = ["🍛 biryani night — order from the cheapest app!", "🍕 pizza + a rom-com", "🥘 butter chicken + garlic naan, homemade", "🍜 ramen date at home", "🌮 taco tuesday energy (any day counts)", "🍝 creamy pasta + candles", "🥗 healthy bowls… then dessert 🍰", "🍔 burger night, his treat", "🫕 hotpot night!", "🍣 sushi + sofa + cuddles", "🥞 breakfast for dinner 🥞", "🧀 cheese board + grape juice, fancy mode", "🍲 her choice — he cooks tonight 👨‍🍳", "🌯 shawarma from the favorite spot", "🍫 skip dinner, dessert only (rebel night)"];
+let vegOnly = localStorage.getItem("veg_only") !== "0";   // veg by default
+let FOODS = vegOnly ? FOODS_VEG : FOODS_ALL;
+if ($("vegToggle")) {
+  const paint = () => {
+    $("vegToggle").textContent = vegOnly ? "🟢 veg only" : "🔴 anything goes";
+    $("vegToggle").classList.toggle("on", vegOnly);
+    FOODS = vegOnly ? FOODS_VEG : FOODS_ALL;
+  };
+  paint();
+  $("vegToggle").addEventListener("click", () => {
+    vegOnly = !vegOnly;
+    localStorage.setItem("veg_only", vegOnly ? "1" : "0");
+    paint();
+  });
+}
 $("foodBtn").addEventListener("click", () => {
   const el = $("foodPick"); el.classList.add("spinning");
   let i = 0;
@@ -1298,4 +1316,45 @@ function gameOver(box, score, best, label) {
           `<span class="cyc-log-item">${esc(o.role || "")} · ${esc(o.what || "")} <small>${esc(o.when || "")}</small></span>`).join("")
       : "";
   });
+})();
+
+
+/* ═══════════ 🧹 FULL RESET (open the site with ?reset=1) ═══════════ */
+/* wipes the shared cloud DB + this device: AI chat & memories, cycle data,
+   water, moods, notes, lists, orders, photos. The login stays. */
+(async function resetAll() {
+  if (!location.search.includes("reset=1")) return;
+  const COLLS = ["notes", "orders", "pings", "destinations", "watchlist", "cycle_log",
+                 "todos_shared", "todos_wishlist", "moods", "answers", "water"];
+  const banner = document.createElement("div");
+  banner.style.cssText = "position:fixed;inset:0;z-index:9999;background:#050208;color:#ff2d78;display:flex;align-items:center;justify-content:center;font:600 18px Outfit,sans-serif;text-align:center;padding:30px";
+  banner.textContent = "🧹 wiping everything clean…";
+  document.body.appendChild(banner);
+
+  /* 1. cloud */
+  await Promise.all(COLLS.map((c) => kvSet("c/" + c, [])));
+  await kvSet("d/cycle/settings", null);
+  for (let i = 0; i < 90; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    if (i < 10) await Promise.all([kvSet(`d/water/${k}`, null), kvSet(`d/moods/${k}`, null), kvSet(`d/answers/${k}`, null)]);
+  }
+
+  /* 2. this device — keep only the unlock so she isn't logged out */
+  const unlocked = localStorage.getItem("liza_unlocked");
+  localStorage.clear();
+  if (unlocked) localStorage.setItem("liza_unlocked", unlocked);
+
+  /* 3. photos */
+  try {
+    if (indexedDB.databases) {
+      const dbs = await indexedDB.databases();
+      await Promise.all(dbs.map((d) => d.name && new Promise((res) => {
+        const r = indexedDB.deleteDatabase(d.name); r.onsuccess = r.onerror = r.onblocked = () => res();
+      })));
+    }
+  } catch (e) {}
+
+  banner.textContent = "✨ all clean — starting fresh";
+  setTimeout(() => location.replace(location.pathname), 900);
 })();
