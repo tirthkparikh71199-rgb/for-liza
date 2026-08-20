@@ -118,6 +118,36 @@ async function renderAllLists() {
   }
 }
 
+
+/* ─────────── 📄 PAGINATION — lists stay short no matter how many months pass ─────────── */
+const PAGE_SIZE = 6;
+const pageState = {};
+/* renders only the first N items and appends a "show more" control that grows the page.
+   `key` keeps each list's own position; `render` turns one item into HTML. */
+function paginate(key, items, container, render, emptyMsg) {
+  items = items || [];
+  const shown = (pageState[key] = Math.min(pageState[key] || PAGE_SIZE, Math.max(items.length, PAGE_SIZE)));
+  if (!items.length) { container.innerHTML = `<p class="muted tiny">${emptyMsg}</p>`; return; }
+  const slice = items.slice(0, shown);
+  let html = slice.map(render).join("");
+  if (items.length > shown || shown > PAGE_SIZE) {
+    html += `<div class="pager">
+      ${items.length > shown ? `<button class="pager-btn" data-more="${key}">show ${Math.min(PAGE_SIZE, items.length - shown)} more ▾</button>` : ""}
+      ${shown > PAGE_SIZE ? `<button class="pager-btn ghost" data-less="${key}">show less ▴</button>` : ""}
+      <span class="pager-count">${slice.length} of ${items.length}</span>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+/* one delegated listener drives every pager on the page */
+document.addEventListener("click", (e) => {
+  const more = e.target.closest("[data-more]"), less = e.target.closest("[data-less]");
+  if (!more && !less) return;
+  const key = (more || less).dataset.more || (more || less).dataset.less;
+  pageState[key] = more ? (pageState[key] || PAGE_SIZE) + PAGE_SIZE : PAGE_SIZE;
+  renderAllLists();
+});
+
 /* ─────────── ✨ FX: confetti, rain, cursor trail, floaters ─────────── */
 function confetti(x, y, n = 14) {
   const em = ["💖", "💕", "💗", "❤️", "✨", "🌸"];
@@ -495,7 +525,13 @@ $("noteAdd").addEventListener("click", async () => {
   $("noteText").value = "";
 });
 watch("notes", (items) => {
-  $("notesWall").innerHTML = items.map((n) => `<div class="sticky from-${esc(n.from)}">${esc(n.text)}<small>— ${esc(n.from)} · ${new Date(n.ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</small></div>`).join("") || `<p class="muted tiny">no notes yet — he'll fix that soon 😌</p>`;
+  paginate("notes", items, $("notesWall"),
+    (n) => `<div class="sticky from-${esc(n.from)}">${esc(n.text)}<small>— ${esc(n.from)} · ${new Date(n.ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</small><span class="sticky-del" data-note="${n.ts}">✖</span></div>`,
+    "no notes yet — he'll fix that soon 😌");
+});
+$("notesWall").addEventListener("click", async (e) => {
+  const d = e.target.closest("[data-note]"); if (!d) return;
+  await deleteItem("notes", Number(d.dataset.note));
 });
 
 /* ─────────── ✈️ TRAVEL DREAMS + AI PLANNER ─────────── */
@@ -505,12 +541,12 @@ $("destAdd").addEventListener("click", async () => {
   $("destName").value = ""; $("destNote").value = "";
 });
 watch("destinations", (items) => {
-  $("destList").innerHTML = items.map((d) => `
+  paginate("destinations", items, $("destList"), (d) => `
     <div class="dest-chip">
       <b>${esc(d.name)}</b>${d.note ? `<small>${esc(d.note)}</small>` : ""}
       <button class="dest-plan" data-place="${esc(d.name)}">plan this ✨</button>
       <span class="dest-del" data-ts="${d.ts}">✖</span>
-    </div>`).join("") || `<p class="muted tiny">add your first dream destination 🌍</p>`;
+    </div>`, "add your first dream destination 🌍");
 });
 $("destList").addEventListener("click", async (e) => {
   const plan = e.target.closest(".dest-plan");
@@ -566,12 +602,12 @@ $("todoAdd").addEventListener("click", async () => {
 $("todoText").addEventListener("keydown", (e) => e.key === "Enter" && $("todoAdd").click());
 function loadTodos() {
   watch("todos_" + currentList, (items) => {
-    $("todoList").innerHTML = items.map((t) => `
+    paginate("todos_" + currentList, items, $("todoList"), (t) => `
       <li class="${t.done ? "done" : ""}">
         <span class="todo-check" data-ts="${t.ts}">${t.done ? "✅" : "⬜"}</span>
         <span>${esc(t.text)}</span>
         <span class="todo-del" data-ts="${t.ts}">🗑️</span>
-      </li>`).join("") || `<p class="muted tiny" style="margin-top:10px">empty — add the first thing ✨</p>`;
+      </li>`, "empty — add the first thing ✨");
   });
 }
 $("todoList").addEventListener("click", async (e) => {
@@ -616,7 +652,9 @@ $("movieResults").addEventListener("click", async (e) => {
   b.textContent = "added ❤️";
 });
 watch("watchlist", (items) => {
-  $("watchlist").innerHTML = items.map((w) => movieCard({ name: w.name, image: { medium: w.img }, rating: { average: w.rating }, ts: w.ts }, true)).join("") || `<p class="muted tiny">your watchlist is empty — add something for friday night 🍿</p>`;
+  paginate("watchlist", items, $("watchlist"),
+    (w) => movieCard({ name: w.name, image: { medium: w.img }, rating: { average: w.rating }, ts: w.ts }, true),
+    "your watchlist is empty — add something for friday night 🍿");
 });
 $("watchlist").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-rm]"); if (b) await deleteItem("watchlist", Number(b.dataset.rm));
@@ -1116,6 +1154,7 @@ function gameOver(box, score, best, label) {
       }
     }
     $("cycMsg").textContent = MSG[ph.name] || "";
+    renderHistory();
 
     const circ = 2 * Math.PI * 52;
     const prog = $("cycProg");
@@ -1199,6 +1238,82 @@ function gameOver(box, score, best, label) {
     }
   }, 36e5);
 
+
+  /* ── 🗂️ editable history: every logged period, with real start + end dates ── */
+  function renderHistory() {
+    const box = $("cycHistory"); if (!box) return;
+    const hist = normHist(S.history).slice().reverse();   // newest first
+    if (!hist.length) {
+      box.innerHTML = `<p class="muted tiny">nothing logged yet — tap 🩸 when your period starts, or add a past one above 💕</p>`;
+      return;
+    }
+    paginate("cyc_history", hist, box, (h) => {
+      const len = h.e ? daysBetween(parse(h.s), parse(h.e)) + 1 : null;
+      return `<div class="cyc-hist-row" data-row="${esc(h.s)}">
+        <div class="chr-dates">
+          <label>start<input type="date" class="chr-in" data-edit="s" data-row="${esc(h.s)}" value="${esc(h.s)}" /></label>
+          <label>end<input type="date" class="chr-in" data-edit="e" data-row="${esc(h.s)}" value="${esc(h.e || "")}" /></label>
+        </div>
+        <span class="chr-len">${len ? len + " days" : "running…"}</span>
+        <button class="chr-del" data-del="${esc(h.s)}" title="delete">🗑️</button>
+      </div>`;
+    }, "");
+  }
+
+  /* edit a start/end date in place */
+  $("cycHistory").addEventListener("change", async (e) => {
+    const inp = e.target.closest("[data-edit]"); if (!inp) return;
+    const hist = normHist(S.history);
+    const row = hist.find((x) => x.s === inp.dataset.row);
+    if (!row) return;
+    const val = inp.value;
+    if (inp.dataset.edit === "s") {
+      if (!val) return;
+      row.s = val;
+    } else {
+      if (val && daysBetween(parse(row.s), parse(val)) < 0) {
+        $("cycMsg").textContent = "the end can't be before the start, jaan 💕";
+        renderHistory(); return;
+      }
+      row.e = val || null;
+    }
+    const clean = normHist(hist);
+    const latest = clean.slice(-1)[0];
+    await save({
+      history: clean,
+      lastStart: latest ? latest.s : S.lastStart,
+      cycleLen: learnCycle(clean) || S.cycleLen,
+      periodLen: learnPeriod(clean) || S.periodLen,
+    });
+    $("cycLast").value = S.lastStart; $("cycLen").value = S.cycleLen; $("cycPer").value = S.periodLen;
+    $("cycMsg").textContent = "updated 💾 predictions recalculated from your real history";
+  });
+
+  /* delete one logged period */
+  $("cycHistory").addEventListener("click", async (e) => {
+    const del = e.target.closest("[data-del]"); if (!del) return;
+    const clean = normHist(S.history).filter((x) => x.s !== del.dataset.del);
+    const latest = clean.slice(-1)[0];
+    await save({
+      history: clean,
+      lastStart: latest ? latest.s : "",
+      cycleLen: learnCycle(clean) || S.cycleLen,
+      periodLen: learnPeriod(clean) || S.periodLen,
+    });
+    $("cycLast").value = S.lastStart || ""; $("cycLen").value = S.cycleLen; $("cycPer").value = S.periodLen;
+    $("cycMsg").textContent = clean.length ? "deleted 🗑️" : "history cleared — start fresh whenever you like 💕";
+  });
+
+  /* add a period that happened before she started using this */
+  $("cycAddPast").addEventListener("click", async () => {
+    const guess = new Date();
+    guess.setDate(guess.getDate() - (S.cycleLen || 28) * (normHist(S.history).length + 1));
+    const hist = addStart(S.history, key(guess));
+    const latest = normHist(hist).slice(-1)[0];
+    await save({ history: hist, lastStart: latest.s, cycleLen: learnCycle(hist) || S.cycleLen });
+    $("cycMsg").textContent = "added a past period 🗂️ set its real dates below 👇";
+  });
+
   /* symptom log */
   $("cycSymptoms").addEventListener("click", (e) => {
     const b = e.target.closest(".qchip"); if (!b) return;
@@ -1206,10 +1321,13 @@ function gameOver(box, score, best, label) {
     confetti(e.clientX, e.clientY, 6);
   });
   watch("cycle_log", (items) => {
-    const list = (items || []).slice(0, 14);
-    $("cycLogList").innerHTML = list.length
-      ? list.map((i) => `<span class="cyc-log-item">${esc(i.symptom)} <small>${esc(i.date || "")}</small></span>`).join("")
-      : `<span class="muted tiny">no logs yet — tap a feeling above 💕</span>`;
+    paginate("cycle_log", items, $("cycLogList"),
+      (i) => `<span class="cyc-log-item">${esc(i.symptom)} <small>${esc(i.date || "")}</small><b class="log-del" data-log="${i.ts}">✖</b></span>`,
+      "no logs yet — tap a feeling above 💕");
+  });
+  $("cycLogList").addEventListener("click", async (e) => {
+    const d = e.target.closest("[data-log]"); if (!d) return;
+    await deleteItem("cycle_log", Number(d.dataset.log));
   });
 
   (async () => {
@@ -1364,11 +1482,13 @@ function gameOver(box, score, best, label) {
   $("orderText").addEventListener("keydown", (e) => e.key === "Enter" && place(e));
 
   watch("orders", (items) => {
-    const list = (items || []).slice(0, 8);
-    $("orderList").innerHTML = list.length
-      ? `<p class="muted tiny" style="width:100%">your recent orders:</p>` + list.map((o) =>
-          `<span class="cyc-log-item">${esc(o.role || "")} · ${esc(o.what || "")} <small>${esc(o.when || "")}</small></span>`).join("")
-      : "";
+    paginate("orders", items, $("orderList"),
+      (o) => `<span class="cyc-log-item">${esc(o.role || "")} · ${esc(o.what || "")} <small>${esc(o.when || "")}</small><b class="log-del" data-order="${o.ts}">✖</b></span>`,
+      "no orders yet — he's waiting 🛎️");
+  });
+  $("orderList").addEventListener("click", async (e) => {
+    const d = e.target.closest("[data-order]"); if (!d) return;
+    await deleteItem("orders", Number(d.dataset.order));
   });
 })();
 

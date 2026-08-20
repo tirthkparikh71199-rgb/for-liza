@@ -581,3 +581,31 @@ footer { padding-bottom: 110px; }
 .veg-toggle { cursor: pointer; font-family: inherit; transition: 0.22s; }
 .veg-toggle.on { color: #fff; border-color: rgba(120,255,170,0.55); background: rgba(60,255,150,0.14); box-shadow: 0 0 14px rgba(60,255,150,0.35); }
 .cyc-fact-wide { grid-column: 1 / -1; }
+
+/* ═══════════ 📄 PAGERS ═══════════ */
+.pager { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; margin-top: 10px; }
+.pager-btn { font-family: inherit; font-size: 0.72rem; font-weight: 600; padding: 7px 14px; border-radius: 999px;
+  color: #fff; cursor: pointer; border: 1px solid rgba(255,45,120,0.45);
+  background: rgba(255,45,120,0.14); transition: 0.22s; }
+.pager-btn:active { transform: scale(0.95); }
+.pager-btn.ghost { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.16); color: var(--muted); }
+.pager-count { font-size: 0.66rem; color: var(--muted); margin-left: auto; }
+.sticky-del, .log-del { cursor: pointer; opacity: 0.5; margin-left: 6px; font-size: 0.7rem; }
+.sticky-del { position: absolute; top: 6px; right: 8px; }
+.sticky { position: relative; }
+.sticky-del:active, .log-del:active { opacity: 1; }
+
+/* ═══════════ 🗂️ PERIOD HISTORY EDITOR ═══════════ */
+.cyc-hist-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+.cyc-add { cursor: pointer; font-family: inherit; color: #fff; border-color: rgba(255,45,120,0.5); background: rgba(255,45,120,0.14); }
+.cyc-history { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.cyc-hist-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap;
+  background: rgba(255,255,255,0.045); border: 1px solid rgba(255,45,120,0.18); border-radius: 14px; padding: 10px 12px; }
+.chr-dates { display: flex; gap: 8px; flex: 1 1 auto; min-width: 0; }
+.chr-dates label { display: flex; flex-direction: column; gap: 3px; font-size: 0.62rem; color: var(--muted); flex: 1 1 0; min-width: 0; }
+.chr-in { width: 100%; font-size: 0.78rem; padding: 7px 9px; border-radius: 10px; color: var(--ink);
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,140,180,0.22); font-family: inherit; }
+.chr-len { font-size: 0.7rem; font-weight: 600; color: var(--pink-soft); white-space: nowrap; }
+.chr-del { background: none; border: 0; cursor: pointer; font-size: 0.95rem; opacity: 0.6; padding: 4px; }
+.chr-del:active { opacity: 1; transform: scale(0.9); }
+@media (max-width: 760px) { .chr-dates { flex: 1 1 100%; } .cyc-hist-row { gap: 8px; } }
